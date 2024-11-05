@@ -1,0 +1,44 @@
+#define _MAX_VIB_N 50 // cantidad maxima de vibraciones a guardar
+
+typedef struct {
+  void (*configure_SYSTICK)(void);
+  void (*configure_GPIO)(void);
+  void (*configure_EXTI)(void);
+  void (*configure_TIMER)(void);
+  void (*configure_UART)(void);
+  void (*configure_DMA)(void);
+  void (*configure_ADC)(void);
+} setup_functions;
+
+setup = {
+  .configure_SYSTICK = configure_SYSTICK,
+  .configure_GPIO = configure_GPIO,
+  .configure_EXTI = configure_EXTI,
+  .configure_TIMER = configure_TIMER,
+  .configure_UART = configure_UART,
+  .configure_DMA = configure_DMA,
+  .configure_ADC = configure_ADC
+};    // Esto no se si esta bien implementarlo en un header
+      // pero deja limpio el main
+
+void configure_GPIO();
+void configure_SYSTICK();
+void configure_ADC();
+void configure_TIMER();
+void configure_DMA();
+void configure_UART();
+void configure_EXTI();
+
+uint8_t index_hist_vib; // para indexar el vector de vibraciones
+uint16_t vib_freq;  // frecuencia de los sismos 
+uint16_t historic_vib[_MAX_VIB_N];  // vibraciones pasadas de los sismos
+uint16_t env_vib;
+uint16_t env_hum;
+
+int buzzer_mode; // estado del buzzer ON/OFF
+
+void update_env_state(uint16_t adc_vib, uint16_t adc_hum);
+void update_vib_frequency();
+
+
+uint16_t read_adc(uint8_t channel);
