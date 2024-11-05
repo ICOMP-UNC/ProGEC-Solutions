@@ -54,3 +54,7 @@ dkms.conf
 # vsocde & pio
 .vscode/
 .pio/
+
+#platformIO
+platformio.ini
+
