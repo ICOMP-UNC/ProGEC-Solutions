@@ -17,6 +17,8 @@
 #define ON 1
 #define OFF 0
 
+uint8_t usart1_rx_buffer[128]; // Define the buffer with an appropriate size
+
 int main() 
 {
  
@@ -105,7 +107,7 @@ void configure_ADC()
 void configure_TIMER()
 {
   rcc_periph_clock_enable(RCC_TIM2);
-  timer_set_mode(TIM2, TIM_CR1_CEN, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
+  timer_set_mode(TIM2, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
   timer_set_prescaler(TIM2, 0x0000);
   timer_set_period(TIM2, 0x0000);
   timer_enable_irq(TIM2, TIM_DIER_UIE);
