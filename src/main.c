@@ -26,15 +26,37 @@ int main()
 
   while(TRUE) 
   {
-    
+    if(analyze_proc_flag == CAN_ANALYZE)  // se ejecuta cada 30 segundos (timer0)
+    {
+      analyze_proc_flag = ANALYZING; 
+      analyze_and_update_system();
+      analyze_proc_flag = ANALYZED;
+    }
   }
   return 0;
 }
-void analyze_and_update_system()
+void analyze_and_update_system() // esto es asincrono a la interrupcion
 {
-  // Aca me parece que analizar los datos 
-  // lleva un monton de operaciones para ser una isr
-  
+   if (vib_freq > THRESHOLD_VIB_FREQ_H || env_hum > THRESHOLD_HUM_H) {
+    gpio_clear(LED_PORT, YELLOW_LED_PIN); 
+    gpio_clear(LED_PORT, GREEN_LED_PIN);
+    gpio_set(LED_PORT, RED_LED_PIN); 
+    buzzer_mode = OFF;
+      if(vib_freq > THRESHOLD_VIB_FREQ_H && env_hum > THRESHOLD_HUM_H)
+        buzzer_mode = ON; // alarma y led rojo
+
+  } else if(vib_freq <= THRESHOLD_VIB_FREQ_L || env_hum <= THRESHOLD_HUM_L) {
+    gpio_clear(LED_PORT, RED_LED_PIN); 
+    gpio_clear(LED_PORT, YELLOW_LED_PIN); 
+    gpio_set(LED_PORT, GREEN_LED_PIN); //led verde encendido
+    buzzer_mode = OFF; 
+  }//estado normal
+    else{  //cualquier estado amarillo 
+    gpio_clear(LED_PORT, RED_LED_PIN); 
+    gpio_clear(LED_PORT, GREEN_LED_PIN);
+    buzzer_mode = OFF; 
+    gpio_set(LED_PORT, YELLOW_LED_PIN); 
+  }
 }
 void update_vib_frequency()
 {
@@ -64,11 +86,10 @@ void sys_tick_handler()
 void timer0_isr()
 {
   timer_clear_flag(TIM2, TIM_SR_UIF);
-  analyze_and_update_system(); // Quizas aca estaria bueno que esto solo actualice el estado
-  // y que en el monitoreo activo se active la alarma
-  // y cambien los leds
-}
+  if(analyze_proc_flag == ANALYZED);
+    analyze_proc_flag = CAN_ANALYZE;
 
+}
 void exti0_isr()
 {
   exti_reset_request(EXTI0);
