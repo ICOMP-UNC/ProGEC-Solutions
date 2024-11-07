@@ -17,11 +17,12 @@
 #define ON 1
 #define OFF 0
 
-uint8_t usart1_rx_buffer[128]; // Define the buffer with an appropriate size
+void control_leds_based_on_hum(uint16_t hum);
+uint16_t read_adc(uint32_t channel);
 
-int main() 
-{
- 
+//uint8_t usart1_rx_buffer[128]; // Define the buffer with an appropriate size
+/*{
+ int main() {
   execute_setup(&setup);
 
   while(TRUE) 
@@ -34,7 +35,36 @@ int main()
     }
   }
   return 0;
+}*/
+
+/**
+ * @brief Main function.
+ * Initializes system clock, GPIO, ADC, Timer, and DMA for periodic ADC conversion and LED control.
+ */
+int main(void)
+{
+    system_clock_setup(); /* Set up system clock */
+    gpio_setup();         /* Configure GPIO pins */
+    adc_setup();          /* Configure ADC1 */
+    configure_systick();  /* Configure SysTick */
+
+    while (TRUE)
+    {
+    }
+
+    return 0;
 }
+
+
+/**
+ * @brief Configures the system clock to 72 MHz using an 8 MHz external crystal.
+ */
+void system_clock_setup(void)
+{
+    rcc_clock_setup_pll(&rcc_hse_configs[RCC_CLOCK_HSE8_72MHZ]);
+}
+
+/*
 void analyze_and_update_system() // esto es asincrono a la interrupcion
 {
    if (vib_freq > THRESHOLD_VIB_FREQ_H || env_hum > THRESHOLD_HUM_H) {
@@ -107,24 +137,94 @@ void configure_SYSTICK()
   systick_set_clocksource(STK_CSR_CLKSOURCE_AHB);
   systick_counter_enable();
 }
+/**
+ * @brief Configures Timer 2 to trigger ADC conversion every 60 seconds.
+ */
 
-void configure_ADC() 
+/**
+ * @brief Configures GPIO pins for the three LEDs.
+ */
+void gpio_setup(void)
 {
-  rcc_periph_clock_enable(RCC_ADC1);
-  rcc_periph_clock_enable(RCC_GPIOA);
-  gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_ANALOG, GPIO0);
-  adc_power_off(ADC1);
-  adc_disable_scan_mode(ADC1);
-  adc_set_single_conversion_mode(ADC1);
-  adc_set_sample_time_on_all_channels(ADC1, ADC_SMPR_SMP_239DOT5CYC);
-  adc_power_on(ADC1);
-  for (int i = 0; i < 800000; i++) {
-    __asm__("nop");
-  } // Wait a bit before calibrating
-  adc_reset_calibration(ADC1);
-  adc_calibrate(ADC1);
+    /* Enable GPIO clocks */
+    rcc_periph_clock_enable(RCC_GPIOA);
+    rcc_periph_clock_enable(RCC_GPIOC);
+
+    /* Configure PA8 (Green LED) as output */
+    gpio_set_mode(GREEN_LED_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GREEN_LED_PIN);
+
+    /* Configure PC13 (Red LED) as output */
+    gpio_set_mode(RED_LED_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, RED_LED_PIN);
 }
 
+/**
+ * @brief Configures the systick timer.
+ */
+void configure_systick(void)
+{
+    systick_set_reload(rcc_ahb_frequency / 1000 * SYSTICK_INTERVAL_MS - 1); /* Set reload for SYSTICK_INTERVAL_MS */
+    systick_set_clocksource(STK_CSR_CLKSOURCE_AHB);
+    systick_counter_enable();
+    systick_interrupt_enable();
+}
+
+/**
+ * @brief SysTick interrupt handler.
+ */
+void sys_tick_handler(void)
+{   
+    control_leds_based_on_hum(read_adc(ADC_CHANNEL_hum));
+}
+
+/**
+ * @brief Configures ADC1 with DMA for humidity sensor readings.
+ */
+void adc_setup(void)
+{
+    /* Enable ADC1 clock */
+    rcc_periph_clock_enable(RCC_ADC1);
+
+    /* Configure ADC1 */
+    adc_power_off(ADC1);
+    adc_disable_scan_mode(ADC1);
+    //adc_set_continuous_conversion_mode(ADC1);
+    adc_disable_external_trigger_regular(ADC1);
+    //adc_set_right_aligned(ADC1);
+    adc_set_sample_time(ADC1, ADC_PIN_hum, ADC_SMPR_SMP_55DOT5CYC); /* Set sample time */
+
+    /* Calibrate ADC1 */
+    adc_power_on(ADC1);
+    adc_reset_calibration(ADC1);
+    adc_calibrate(ADC1);
+
+}
+
+uint16_t read_adc(uint32_t channel)
+{
+  uint8_t channels[1] = { channel };
+  adc_set_regular_sequence(ADC1, 1, channels);
+  adc_start_conversion_direct(ADC1);
+  while (!adc_eoc(ADC1));
+  return adc_read_regular(ADC1);
+}
+
+
+
+void control_leds_based_on_hum(uint16_t hum)
+{
+    uint16_t humidity = (hum * 3.3 / 4096.0) * 100; // Convert ADC value to humidity
+
+    /* Control LEDs based on humidity range */
+    if (humidity < THRESHOLD_HUM_M)
+    {
+        gpio_clear(RED_LED_PORT, RED_LED_PIN);       /* Red LED off */
+    }
+    else
+    {
+        gpio_set(RED_LED_PORT, RED_LED_PIN);         /* Red LED on */
+    }
+}
+/*
 void configure_TIMER()
 {
   rcc_periph_clock_enable(RCC_TIM2);
@@ -178,3 +278,4 @@ void configure_EXTI()
   exti_enable_request(EXTI0);
   nvic_enable_irq(NVIC_EXTI0_IRQ);
 }
+*/

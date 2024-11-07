@@ -1,3 +1,5 @@
+
+
 #define _MAX_VIB_N 50 // cantidad maxima de vibraciones a guardar
 
 #define THRESHOLD_VIB_FREQ_H 1000
@@ -5,12 +7,18 @@
 #define THRESHOLD_VIB_FREQ_L 0
 
 #define THRESHOLD_HUM_H 1000
-#define THRESHOLD_HUM_M 500
+#define THRESHOLD_HUM_M 50
 #define THRESHOLD_HUM_L 0
 
+#define GREEN_LED_PORT          GPIOA
+#define GREEN_LED_PIN           GPIO8 /* PA8 (Green LED) */
+#define RED_LED_PORT            GPIOC
+#define RED_LED_PIN             GPIO13 /* PC13 (Red LED) */ 
 
+/* Define SysTick interval */
+#define SYSTICK_INTERVAL_MS 100
 
-
+/*
 typedef struct {
   void (*configure_SYSTICK)(void);
   void (*configure_GPIO)(void);
@@ -21,7 +29,7 @@ typedef struct {
   void (*configure_ADC)(void);
 } setup_functions;
 
-setup = {
+/*setup = {
   .configure_SYSTICK = configure_SYSTICK,
   .configure_GPIO = configure_GPIO,
   .configure_EXTI = configure_EXTI,
@@ -31,12 +39,9 @@ setup = {
   .configure_ADC = configure_ADC
 };    // Esto no se si esta bien implementarlo en un header
       // pero deja limpio el main
-/**
- * @brief Status of the analyze process.
- * This will be triggered by the timer0 ISR
- * Every 30 secs the system will allow the analyze process to be executed.
- * This will function as an async process
- */
+    */
+
+/*
 typedef enum {
   ANALYZING,
   ANALYZED,
@@ -74,6 +79,6 @@ void update_vib_frequency();
  * -> Both are in the middle : YELLOW LED
  * -> Both vibrations frequency and humidity are below the threshold : GREEN LED
  */
-void analyze_and_update_system();
+//void analyze_and_update_system();
 
-uint16_t read_adc(uint8_t channel);
+
