@@ -14,25 +14,6 @@
 #define SYSTICK_INTERVAL_MS 100
 
 
-typedef struct {
-  void (*system_clock_setup)(void);
-  void (*gpio_setup)(void);
-  void (*adc_setup)(void);
-  void (*timer2_setup)(void);
-} setup_functions;
-
-
-setup = {
-.system_clock_setup = system_clock_setup,
-.gpio_setup = gpio_setup,
-.adc_setup = adc_setup,
-.timer2_setup = timer2_setup
-
-};    // Esto no se si esta bien implementarlo en un header
-      // pero deja limpio el main
-    
-
-
 typedef enum {
   ANALYZING,
   ANALYZED,
@@ -40,24 +21,7 @@ typedef enum {
 } analyze_flag_t;
 
 
-void system_clock_setup(void);
-void gpio_setup(void);
-void adc_setup(void);
-void timer2_setup(void);
 
-
-uint8_t index_hist_vib; // para indexar el vector de vibraciones
-uint16_t vib_freq;  // frecuencia de los sismos 
-uint16_t historic_vib[_MAX_VIB_N];  // vibraciones pasadas de los sismos
-uint16_t env_vib;
-uint16_t env_hum;
-
-analyze_flag_t analyze_proc_flag = CAN_ANALYZE; 
-
-int buzzer_mode; // estado del buzzer ON/OFF
-
-void update_env_state(uint16_t adc_vib, uint16_t adc_hum);
-void update_vib_frequency();
 /**
  * @brief Analyze the environment info and 
  * update the LEDs and alarm system.
@@ -68,6 +32,5 @@ void update_vib_frequency();
  * -> Both are in the middle : YELLOW LED
  * -> Both vibrations frequency and humidity are below the threshold : GREEN LED
  */
-void analyze_and_update_system();
 
 
