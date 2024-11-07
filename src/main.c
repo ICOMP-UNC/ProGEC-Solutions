@@ -58,7 +58,6 @@ int main(void)
     while (TRUE)
     {
       
-        analyze_and_update_system();
         
       }
 
@@ -77,7 +76,7 @@ void system_clock_setup(void)
 
 void analyze_and_update_system(void) // esto es asincrono a la interrupcion
 {
-   if (vib_freq > THRESHOLD_VIB_FREQ_H || env_hum > THRESHOLD_HUM_H) {
+   if (env_vib > THRESHOLD_VIB_FREQ_H || env_hum > THRESHOLD_HUM_H) {
     gpio_set(LED_PORT, YELLOW_LED_PIN); 
     gpio_set(LED_PORT, GREEN_LED_PIN);
     gpio_clear(LED_PORT, RED_LED_PIN); 
@@ -85,7 +84,7 @@ void analyze_and_update_system(void) // esto es asincrono a la interrupcion
       if(vib_freq > THRESHOLD_VIB_FREQ_H && env_hum > THRESHOLD_HUM_H)
         buzzer_mode = ON; // alarma y led rojo
 
-  } else if(vib_freq <= THRESHOLD_VIB_FREQ_L || env_hum <= THRESHOLD_HUM_L) {
+  } else if(env_vib <= THRESHOLD_VIB_FREQ_L || env_hum <= THRESHOLD_HUM_L) {
     gpio_set(LED_PORT, RED_LED_PIN); 
     gpio_set(LED_PORT, YELLOW_LED_PIN); 
     gpio_clear(LED_PORT, GREEN_LED_PIN); //led verde encendido
@@ -115,8 +114,7 @@ void update_env_state(uint16_t adc_vib, uint16_t adc_hum)
   env_hum  = (adc_hum * 3.3 / 4096.0) * 100; // Convert ADC value to humidity
   env_vib = (adc_vib * 3.3 / 4096.0) * 100; // Convert ADC value to vibration
 
-  env_hum = adc_hum;
-  env_vib = adc_vib;
+
   //Aca deberiamos procesarlos un poco mas y ver que rango nos tira el adc
 } 
 void sys_tick_handler(void)
@@ -127,8 +125,7 @@ void sys_tick_handler(void)
     gpio_clear(LED_PORT, YELLOW_LED_PIN);
   }
   update_vib_frequency();
-  if(analyze_proc_flag == ANALYZED)
-    analyze_proc_flag = CAN_ANALYZE;
+  analyze_and_update_system();
 }
 /**
  * @brief 

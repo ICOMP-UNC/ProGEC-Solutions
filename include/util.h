@@ -1,10 +1,10 @@
 #define _MAX_VIB_N 50 // cantidad maxima de vibraciones a guardar
 
-#define THRESHOLD_VIB_FREQ_H 1000
-#define THRESHOLD_VIB_FREQ_M 500
+#define THRESHOLD_VIB_FREQ_H 100
+#define THRESHOLD_VIB_FREQ_M 50
 #define THRESHOLD_VIB_FREQ_L 0
 
-#define THRESHOLD_HUM_H 1000
+#define THRESHOLD_HUM_H 100
 #define THRESHOLD_HUM_M 50
 #define THRESHOLD_HUM_L 0
 
