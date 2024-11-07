@@ -19,9 +19,11 @@ typedef struct {
   void (*configure_UART)(void);
   void (*configure_DMA)(void);
   void (*configure_ADC)(void);
+  void (*SystemInit)(void);
 } setup_functions;
 
 setup = {
+  .SystemInit = SystemInit,
   .configure_SYSTICK = configure_SYSTICK,
   .configure_GPIO = configure_GPIO,
   .configure_EXTI = configure_EXTI,

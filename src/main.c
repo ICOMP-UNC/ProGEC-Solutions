@@ -21,7 +21,6 @@ uint8_t usart1_rx_buffer[128]; // Define the buffer with an appropriate size
 
 int main() 
 {
- 
   execute_setup(&setup);
 
   while(TRUE) 
@@ -35,6 +34,18 @@ int main()
   }
   return 0;
 }
+void systemInit(void)
+{
+    /* Configure the system clock to run at 72 MHz using an 8 MHz external crystal */
+    // Pro tip! To avoid warning messages, use the following syntax:
+    // rcc_clock_setup_pll(&rcc_hse_configs[RCC_CLOCK_HSE8_72MHZ]);
+
+    rcc_clock_setup_in_hse_8mhz_out_72mhz(); /* Use the default configuration */
+
+    /* Enable the clock for GPIOC */
+    rcc_periph_clock_enable(RCC_GPIOC);
+}
+
 void analyze_and_update_system() // esto es asincrono a la interrupcion
 {
    if (vib_freq > THRESHOLD_VIB_FREQ_H || env_hum > THRESHOLD_HUM_H) {
