@@ -1,5 +1,3 @@
-
-
 #define _MAX_VIB_N 50 // cantidad maxima de vibraciones a guardar
 
 #define THRESHOLD_VIB_FREQ_H 1000
@@ -10,38 +8,31 @@
 #define THRESHOLD_HUM_M 50
 #define THRESHOLD_HUM_L 0
 
-#define GREEN_LED_PORT          GPIOA
-#define GREEN_LED_PIN           GPIO8 /* PA8 (Green LED) */
-#define RED_LED_PORT            GPIOC
-#define RED_LED_PIN             GPIO13 /* PC13 (Red LED) */ 
+
 
 /* Define SysTick interval */
 #define SYSTICK_INTERVAL_MS 100
 
-/*
+
 typedef struct {
-  void (*configure_SYSTICK)(void);
-  void (*configure_GPIO)(void);
-  void (*configure_EXTI)(void);
-  void (*configure_TIMER)(void);
-  void (*configure_UART)(void);
-  void (*configure_DMA)(void);
-  void (*configure_ADC)(void);
+  void (*system_clock_setup)(void);
+  void (*gpio_setup)(void);
+  void (*adc_setup)(void);
+  void (*timer2_setup)(void);
 } setup_functions;
 
-/*setup = {
-  .configure_SYSTICK = configure_SYSTICK,
-  .configure_GPIO = configure_GPIO,
-  .configure_EXTI = configure_EXTI,
-  .configure_TIMER = configure_TIMER,
-  .configure_UART = configure_UART,
-  .configure_DMA = configure_DMA,
-  .configure_ADC = configure_ADC
+
+setup = {
+.system_clock_setup = system_clock_setup,
+.gpio_setup = gpio_setup,
+.adc_setup = adc_setup,
+.timer2_setup = timer2_setup
+
 };    // Esto no se si esta bien implementarlo en un header
       // pero deja limpio el main
-    */
+    
 
-/*
+
 typedef enum {
   ANALYZING,
   ANALYZED,
@@ -49,13 +40,11 @@ typedef enum {
 } analyze_flag_t;
 
 
-void configure_GPIO();
-void configure_SYSTICK();
-void configure_ADC();
-void configure_TIMER();
-void configure_DMA();
-void configure_UART();
-void configure_EXTI();
+void system_clock_setup(void);
+void gpio_setup(void);
+void adc_setup(void);
+void timer2_setup(void);
+
 
 uint8_t index_hist_vib; // para indexar el vector de vibraciones
 uint16_t vib_freq;  // frecuencia de los sismos 
@@ -79,6 +68,6 @@ void update_vib_frequency();
  * -> Both are in the middle : YELLOW LED
  * -> Both vibrations frequency and humidity are below the threshold : GREEN LED
  */
-//void analyze_and_update_system();
+void analyze_and_update_system();
 
 
