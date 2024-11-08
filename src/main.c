@@ -81,7 +81,7 @@ int main(void)
         gpio_set(BUZZER_PORT, BUZZER_PIN);
       }
 
-       env_hum = adc_buffer[4];
+      env_hum = adc_buffer[4];
       env_hum  = (env_hum * 3.3 / 4096.0) * 100; // Convert ADC value to humidity
 
   if(env_hum > 50){
@@ -164,6 +164,7 @@ void sys_tick_handler(void)
 //  }
  // update_vib_frequency();
   //analyze_and_update_system();
+  gpio_set(BUZZER_PORT, BUZZER_PIN);
 }
 /**
  * @brief 
