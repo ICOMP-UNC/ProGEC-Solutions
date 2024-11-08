@@ -93,47 +93,19 @@ int main(void)
 void setup_dma(uint32_t dmaController, uint8_t stream, uint32_t channel) {
     // Stop the DMA stream during configuration
     dma_disable_stream(dmaController, stream);
-
-    // Reset the DMA stream to its default state
     dma_stream_reset(dmaController, stream);
-
-    // Enable FIFO mode (optional, depending on your needs)
     dma_enable_fifo_mode(dmaController, stream);
-
-    // Data is being copied from peripheral to memory
     dma_set_transfer_mode(dmaController, stream, DMA_SxCR_DIR_PERIPHERAL_TO_MEM);
-
-    // Set the peripheral address to the ADC data register
     dma_set_peripheral_address(dmaController, stream, (uint32_t)&ADC_DR(ADC1));
-
-    // Set the memory address to the buffer where ADC data will be stored
     dma_set_memory_address(dmaController, stream, (uint32_t)adc_buffer);
-
-    // Set the memory size to 16-bit (2 bytes)
     dma_set_memory_size(dmaController, stream, DMA_SxCR_MSIZE_16BIT);
-
-    // Enable circular mode to continuously fill the buffer
     dma_enable_circular_mode(dmaController, stream);
-
-    // Select the DMA channel
     dma_channel_select(dmaController, stream, channel);
-
-    // Set the number of data items to be transferred
     dma_set_number_of_data(dmaController, stream, ADC_BUFFER_SIZE);
-
-    // Increment the memory pointer after each transfer
     dma_enable_memory_increment_mode(dmaController, stream);
-
-    // Set the peripheral size to 16-bit (2 bytes)
     dma_set_peripheral_size(dmaController, stream, DMA_SxCR_PSIZE_16BIT);
-
-    // Disable peripheral increment mode (peripheral address remains constant)
     dma_disable_peripheral_increment_mode(dmaController, stream);
-
-    // Enable transfer complete interrupt (optional, if you need an interrupt)
     dma_enable_transfer_complete_interrupt(dmaController, stream);
-
-    // Enable the DMA stream
     dma_enable_stream(dmaController, stream);
 }
 
