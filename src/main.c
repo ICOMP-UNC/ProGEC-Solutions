@@ -25,7 +25,7 @@ uint16_t env_vib;
 uint16_t env_hum;
 uint8_t usart1_tx_buffer[4]; // Yo pense que solo ibamos a transmitir, cambio el rx? 
 
-
+uint16_t adc_buffer[ADC_BUFFER_SIZE]; // Buffer to store ADC values
 analyze_flag_t analyze_proc_flag = CAN_ANALYZE; 
 
 int buzzer_mode; // estado del buzzer ON/OFF
@@ -43,8 +43,6 @@ void control_leds_based_on_hum(uint16_t hum);
 uint16_t read_adc(uint32_t channel);
 
 //uint8_t usart1_rx_buffer[128]; // Define the buffer with an appropriate size
-
-
 /**
  * @brief Main function.
  * Initializes system clock, GPIO, ADC, Timer, and DMA for periodic ADC conversion and LED control.
@@ -54,9 +52,11 @@ int main(void)
     system_clock_setup();
     gpio_setup();
     adc_setup();
+    dma_setup();
     configure_systick();
+
     buzzer_mode = OFF;  // inicializamos el buzzer en OFF 
-    
+
     while (TRUE)
     {
       if(buzzer_mode == ON){
@@ -83,7 +83,11 @@ void system_clock_setup(void)
 
 void analyze_and_update_system(void) // esto es asincrono a la interrupcion
 {
-   if (env_vib > THRESHOLD_VIB_FREQ_H || env_hum > THRESHOLD_HUM_H) {
+  env_hum = adc_buffer[0];
+  if(env_hum > 50){
+    gpio_clear(LED_PORT, RED_LED_PIN);
+    /*
+      if (env_vib > THRESHOLD_VIB_FREQ_H || env_hum > THRESHOLD_HUM_H) {
     gpio_set(LED_PORT, YELLOW_LED_PIN); 
     gpio_set(LED_PORT, GREEN_LED_PIN);
     gpio_clear(LED_PORT, RED_LED_PIN); 
@@ -103,6 +107,8 @@ void analyze_and_update_system(void) // esto es asincrono a la interrupcion
    // buzzer_mode = OFF; 
     gpio_clear(LED_PORT, YELLOW_LED_PIN); 
   }
+    */
+ 
 }}
 void update_vib_frequency(void)
 {
@@ -127,11 +133,11 @@ void update_env_state(uint16_t adc_vib, uint16_t adc_hum)
 void sys_tick_handler(void)
 { 
   //Convertir datos y guardarlos
-  update_env_state(read_adc(ADC_CHANNEL_hum), read_adc(ADC_CHANNEL_vib));
-  if(env_hum > 100){
-    gpio_clear(LED_PORT, YELLOW_LED_PIN);
-  }
-  update_vib_frequency();
+  //update_env_state(read_adc(ADC_CHANNEL_hum), read_adc(ADC_CHANNEL_vib));
+ // if(env_hum > 100){
+  //  gpio_clear(LED_PORT, YELLOW_LED_PIN);
+//  }
+ // update_vib_frequency();
   analyze_and_update_system();
 }
 /**
@@ -149,6 +155,31 @@ void exti0_isr(void)
 {
   exti_reset_request(EXTI0);
   buzzer_mode = !buzzer_mode;  
+}
+
+void dma_setup(void)
+{
+    /* Enable DMA1 clock */
+    rcc_periph_clock_enable(RCC_DMA1);
+
+    /* Reset DMA1 stream */
+    dma_channel_reset(DMA1, DMA_CHANNEL1);
+
+    /* Set DMA configuration */
+    dma_set_peripheral_address(DMA1, DMA_CHANNEL1, (uint32_t)&ADC_DR(ADC1)); /* ADC data register */
+    dma_set_memory_address(DMA1, DMA_CHANNEL1, (uint32_t)adc_buffer);        /* Memory buffer */
+    dma_set_number_of_data(DMA1, DMA_CHANNEL1, ADC_BUFFER_SIZE);             /* Number of data items */
+    dma_set_priority(DMA1, DMA_CHANNEL1, DMA_CCR_PL_LOW);
+    dma_set_memory_size(DMA1, DMA_CHANNEL1, DMA_CCR_MSIZE_16BIT);     /* Memory size: 16 bits */
+    dma_set_peripheral_size(DMA1, DMA_CHANNEL1, DMA_CCR_PSIZE_16BIT); /* Peripheral size: 16 bits */
+    dma_enable_memory_increment_mode(DMA1, DMA_CHANNEL1);
+    dma_enable_circular_mode(DMA1, DMA_CHANNEL1); /* Enable circular mode */
+
+    /* Start DMA transfer */
+    dma_enable_channel(DMA1, DMA_CHANNEL1);
+
+    /* Enable ADC DMA mode */
+    adc_enable_dma(ADC1);
 }
 
 
@@ -195,19 +226,26 @@ void configure_systick(void)
 /**
  * @brief Configures ADC1 with DMA for humidity sensor readings.
  */
+ */
 void adc_setup(void)
 {
+    /* Enable ADC1 clock */
     rcc_periph_clock_enable(RCC_ADC1);
+
+    /* Configure ADC1 */
     adc_power_off(ADC1);
     adc_disable_scan_mode(ADC1);
+    adc_set_continuous_conversion_mode(ADC1);
     adc_disable_external_trigger_regular(ADC1);
-    adc_set_sample_time(ADC1, ADC_PIN_hum, ADC_SMPR_SMP_55DOT5CYC); /* Set sample time */
-    adc_set_sample_time(ADC1, ADC_PIN_vib, ADC_SMPR_SMP_55DOT5CYC); /* Set sample time */
+    adc_set_right_aligned(ADC1);
+    adc_set_sample_time(ADC1, ADC_CHANNEL_hum, ADC_SMPR_SMP_55DOT5CYC); /* Set sample time */
+
+    /* Calibrate ADC1 */
     adc_power_on(ADC1);
     adc_reset_calibration(ADC1);
     adc_calibrate(ADC1);
-
 }
+
 
 uint16_t read_adc(uint32_t channel)
 {
@@ -217,6 +255,7 @@ uint16_t read_adc(uint32_t channel)
   adc_start_conversion_direct(ADC1);
   while (!adc_eoc(ADC1));
   return adc_read_regular(ADC1);
+
 }
 
 

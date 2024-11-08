@@ -8,6 +8,7 @@
 #define THRESHOLD_HUM_M 50
 #define THRESHOLD_HUM_L 0
 
+#define ADC_BUFFER_SIZE 16 /* Buffer size for averaging */
 
 
 /* Define SysTick interval */
