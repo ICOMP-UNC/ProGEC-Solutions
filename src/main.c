@@ -42,6 +42,9 @@ void update_vib_frequency(void);
 void control_leds_based_on_hum(uint16_t hum);
 uint16_t read_adc(uint32_t channel);
 
+void dma_setup(void);
+
+
 //uint8_t usart1_rx_buffer[128]; // Define the buffer with an appropriate size
 /**
  * @brief Main function.
@@ -77,7 +80,7 @@ int main(void)
     return 0;
 }
 
-
+}
 
 /**
  * @brief Configures the system clock to 72 MHz using an 8 MHz external crystal.
@@ -232,7 +235,7 @@ void configure_systick(void)
 /**
  * @brief Configures ADC1 with DMA for humidity sensor readings.
  */
- */
+ 
 void adc_setup(void)
 {
     /* Enable ADC1 clock */
