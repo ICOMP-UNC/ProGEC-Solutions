@@ -17,11 +17,15 @@
 #define ON 1
 #define OFF 0
 
+
 uint8_t index_hist_vib; // para indexar el vector de vibraciones
 uint16_t vib_freq;  // frecuencia de los sismos 
 uint16_t historic_vib[_MAX_VIB_N];  // vibraciones pasadas de los sismos
 uint16_t env_vib;
 uint16_t env_hum;
+=======
+uint8_t usart1_tx_buffer[4]; // Yo pense que solo ibamos a transmitir, cambio el rx? 
+
 
 analyze_flag_t analyze_proc_flag = CAN_ANALYZE; 
 
@@ -48,12 +52,6 @@ uint16_t read_adc(uint32_t channel);
  */
 int main(void)
 {
-  // execute_setup(&setup);
-    system_clock_setup();
-    gpio_setup();
-    adc_setup();
-    configure_systick();
-    //configure_dma();
 
     while (TRUE)
     {
@@ -68,6 +66,7 @@ int main(void)
 }
 
 
+
 /**
  * @brief Configures the system clock to 72 MHz using an 8 MHz external crystal.
  */
@@ -75,6 +74,7 @@ void system_clock_setup(void)
 {
     rcc_clock_setup_pll(&rcc_hse_configs[RCC_CLOCK_HSE8_72MHZ]);
 }
+
 
 
 void analyze_and_update_system(void) // esto es asincrono a la interrupcion
@@ -144,8 +144,9 @@ void sys_tick_handler(void)
 void exti0_isr(void)
 {
   exti_reset_request(EXTI0);
-  buzzer_mode = !buzzer_mode;
+  buzzer_mode = !buzzer_mode;  
 }
+
 
 /**
  * @brief Configures GPIO pins for the three LEDs.
@@ -206,6 +207,7 @@ void adc_setup(void)
 
 uint16_t read_adc(uint32_t channel)
 {
+
   uint8_t channels[1] = { channel };
   adc_set_regular_sequence(ADC1, 1, channels);
   adc_start_conversion_direct(ADC1);
@@ -217,6 +219,34 @@ uint16_t read_adc(uint32_t channel)
 
 /*
 void control_leds_based_on_hum(uint16_t hum)
+=======
+  rcc_periph_clock_enable(RCC_USART1);
+  usart_set_baudrate(USART1, 9600);
+  usart_set_databits(USART1, 8);                     //enviariamos 8 bits por data
+  usart_set_stopbits(USART1, USART_STOPBITS_1);
+  usart_set_parity(USART1, USART_PARITY_NONE);
+  usart_set_mode(USART1, USART_MODE_TX);
+  usart_set_flow_control(USART1, USART_FLOWCONTROL_NONE);
+  usart_enable(USART1);
+  nvic_enable_irq(NVIC_USART1_IRQ);
+}
+
+void send_uart_data(uint16_t vib_freq, uint16_t env_hum){
+    //como se pueden enviar datos cada 1 byte, y nuestros datos son de 2 bytes
+    usart1_tx_buffer[0] = (vib_freq >> 8) & 0xFF;   // Parte alta de vib_freq
+    usart1_tx_buffer[1] = vib_freq & 0xFF;          // Parte baja de vib_freq
+    usart1_tx_buffer[2] = (env_hum >> 8) & 0xFF;    // Parte alta de env_hum
+    usart1_tx_buffer[3] = env_hum & 0xFF;           // Parte baja de env_hum
+
+  //capaz 0xff podemos definirlo como una constante
+  for (int i = 0; i < 4; i++) {                        // Enviamos los 4 bytes uno por uno
+    usart_wait_send_ready(USART1);                     // Funcion que el buffer este vacio
+    usart_send_blocking(USART1, usart1_tx_buffer[i]);  // Enviamos el byte en bloque
+  }
+  gpio_toggle(LED_PORT, LED_TX);                       // Para verificar si se envio
+}
+
+
 {
     uint16_t humidity = (hum * 3.3 / 4096.0) * 100; // Convert ADC value to humidity
 

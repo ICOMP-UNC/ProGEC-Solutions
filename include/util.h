@@ -13,7 +13,6 @@
 /* Define SysTick interval */
 #define SYSTICK_INTERVAL_MS 100
 
-
 typedef enum {
   ANALYZING,
   ANALYZED,
