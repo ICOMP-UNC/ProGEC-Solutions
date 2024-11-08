@@ -56,7 +56,7 @@ int main(void)
     adc_setup();
     dma_setup();
     configure_systick();
-    adc_set_regular_sequence(ADC1, 1, &ADC_CHANNEL_hum);
+    adc_set_regular_sequence(ADC1, 1, ADC_CHANNEL_hum);
 
     // Iniciar conversiones continuas
     adc_start_conversion_regular(ADC1);
@@ -71,9 +71,12 @@ int main(void)
         gpio_set(BUZZER_PORT, BUZZER_PIN);
       }
 
-       env_hum = adc_buffer[0];
+       env_hum = adc_buffer[4];
+      env_hum  = (env_hum * 3.3 / 4096.0) * 100; // Convert ADC value to humidity
+
   if(env_hum > 50){
     gpio_clear(LED_PORT, RED_LED_PIN);
+    gpio_set(LED_PORT, YELLOW_LED_PIN);
     }
     if(env_hum > 0 && env_hum <= 50)
     {
@@ -150,7 +153,7 @@ void sys_tick_handler(void)
   //  gpio_clear(LED_PORT, YELLOW_LED_PIN);
 //  }
  // update_vib_frequency();
-  analyze_and_update_system();
+  //analyze_and_update_system();
 }
 /**
  * @brief 
@@ -179,7 +182,7 @@ void dma_setup(void)
     // Configuración del DMA
     dma_set_peripheral_address(DMA1, DMA_CHANNEL1, (uint32_t)&ADC_DR(ADC1));
     dma_set_memory_address(DMA1, DMA_CHANNEL1, (uint32_t)adc_buffer);
-    dma_set_number_of_data(DMA1, DMA_CHANNEL1, BUFFER_SIZE);
+    dma_set_number_of_data(DMA1, DMA_CHANNEL1, ADC_BUFFER_SIZE);
     dma_set_priority(DMA1, DMA_CHANNEL1, DMA_CCR_PL_HIGH);
     dma_enable_memory_increment_mode(DMA1, DMA_CHANNEL1);
     dma_set_read_from_peripheral(DMA1, DMA_CHANNEL1);
