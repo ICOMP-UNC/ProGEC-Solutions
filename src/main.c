@@ -57,10 +57,13 @@ int main(void)
 
     while (TRUE)
     {
-      
-        
+      if(buzzer_mode == 1){
+        gpio_clear(BUZZER_PORT, BUZZER_PIN);
       }
-
+      else{
+        gpio_set(BUZZER_PORT, BUZZER_PIN);
+      }
+    }
     return 0;
 }
 
@@ -80,23 +83,23 @@ void analyze_and_update_system(void) // esto es asincrono a la interrupcion
     gpio_set(LED_PORT, YELLOW_LED_PIN); 
     gpio_set(LED_PORT, GREEN_LED_PIN);
     gpio_clear(LED_PORT, RED_LED_PIN); 
-    buzzer_mode = OFF;
-      if(vib_freq > THRESHOLD_VIB_FREQ_H && env_hum > THRESHOLD_HUM_H)
-        buzzer_mode = ON; // alarma y led rojo
+    //buzzer_mode = OFF;
+      if(vib_freq > THRESHOLD_VIB_FREQ_H && env_hum > THRESHOLD_HUM_H){
+       // buzzer_mode = ON; // alarma y led rojo
 
   } else if(env_vib <= THRESHOLD_VIB_FREQ_L || env_hum <= THRESHOLD_HUM_L) {
     gpio_set(LED_PORT, RED_LED_PIN); 
     gpio_set(LED_PORT, YELLOW_LED_PIN); 
     gpio_clear(LED_PORT, GREEN_LED_PIN); //led verde encendido
-    buzzer_mode = OFF; 
+    //buzzer_mode = OFF; 
   }//estado normal
     else{  //cualquier estado amarillo 
     gpio_set(LED_PORT, RED_LED_PIN); 
     gpio_set(LED_PORT, GREEN_LED_PIN);
-    buzzer_mode = OFF; 
+   // buzzer_mode = OFF; 
     gpio_clear(LED_PORT, YELLOW_LED_PIN); 
   }
-}
+}}
 void update_vib_frequency(void)
 {
   historic_vib[index_hist_vib] = env_vib;
@@ -157,6 +160,20 @@ void gpio_setup(void)
     gpio_set_mode(LED_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, RED_LED_PIN);
     gpio_set_mode(LED_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, YELLOW_LED_PIN);
 
+    //config buzzer
+    rcc_periph_clock_enable(RCC_GPIOC);
+    gpio_set_mode(BUZZER_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, BUZZER_PIN);
+
+    //config switch manual
+    rcc_periph_clock_enable(RCC_GPIOA);
+    gpio_set_mode(BUTTON_PORT, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN, BUTTON_PIN);
+    gpio_set(BUTTON_PORT, BUTTON_PIN);
+    nvic_enable_irq(NVIC_EXTI0_IRQ);
+
+    exti_select_source(EXTI0, BUZZER_PORT);        /* Select PA0 as the source for EXTI0 */
+    exti_set_trigger(EXTI0, EXTI_TRIGGER_FALLING); /* Trigger on falling edge */
+    exti_enable_request(EXTI0);                    /* Enable EXTI0 interrupt request */
+
 }
 
 /**
@@ -195,6 +212,7 @@ uint16_t read_adc(uint32_t channel)
   while (!adc_eoc(ADC1));
   return adc_read_regular(ADC1);
 }
+
 
 
 /*

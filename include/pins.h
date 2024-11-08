@@ -21,10 +21,10 @@
 /**
  * PIN definitions 
  */
-#define YELLOW_LED_PIN GPIO13
+#define YELLOW_LED_PIN GPIO12
 #define RED_LED_PIN GPIO9
 #define GREEN_LED_PIN GPIO8
-#define BUZZER_PIN GPIO11
+#define BUZZER_PIN GPIO13
 #define BUTTON_PIN GPIO0
 #define ADC_PIN_vib GPIO1
 #define ADC_PIN_hum GPIO2
