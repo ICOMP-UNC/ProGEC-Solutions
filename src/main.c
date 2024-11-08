@@ -168,27 +168,22 @@ void exti0_isr(void)
 
 void dma_setup(void)
 {
-    /* Enable DMA1 clock */
-    rcc_periph_clock_enable(RCC_DMA1);
+  rcc_periph_clock_enable(RCC_DMA1);
 
-    /* Reset DMA1 stream */
+    // Resetear la configuración del canal DMA
     dma_channel_reset(DMA1, DMA_CHANNEL1);
 
-    /* Set DMA configuration */
-    dma_set_peripheral_address(DMA1, DMA_CHANNEL1, (uint32_t)&ADC_DR(ADC1)); /* ADC data register */
-    dma_set_memory_address(DMA1, DMA_CHANNEL1, (uint32_t)adc_buffer);        /* Memory buffer */
-    dma_set_number_of_data(DMA1, DMA_CHANNEL1, ADC_BUFFER_SIZE);             /* Number of data items */
-    dma_set_priority(DMA1, DMA_CHANNEL1, DMA_CCR_PL_LOW);
-    dma_set_memory_size(DMA1, DMA_CHANNEL1, DMA_CCR_MSIZE_16BIT);     /* Memory size: 16 bits */
-    dma_set_peripheral_size(DMA1, DMA_CHANNEL1, DMA_CCR_PSIZE_16BIT); /* Peripheral size: 16 bits */
+    // Configuración del DMA
+    dma_set_peripheral_address(DMA1, DMA_CHANNEL1, (uint32_t)&ADC_DR(ADC1));
+    dma_set_memory_address(DMA1, DMA_CHANNEL1, (uint32_t)adc_buffer);
+    dma_set_number_of_data(DMA1, DMA_CHANNEL1, BUFFER_SIZE);
+    dma_set_priority(DMA1, DMA_CHANNEL1, DMA_CCR_PL_HIGH);
     dma_enable_memory_increment_mode(DMA1, DMA_CHANNEL1);
-    dma_enable_circular_mode(DMA1, DMA_CHANNEL1); /* Enable circular mode */
+    dma_set_read_from_peripheral(DMA1, DMA_CHANNEL1);
+    dma_enable_circular_mode(DMA1, DMA_CHANNEL1);
 
-    /* Start DMA transfer */
+    // Habilitar el canal DMA
     dma_enable_channel(DMA1, DMA_CHANNEL1);
-
-    /* Enable ADC DMA mode */
-    adc_enable_dma(ADC1);
 }
 
 
@@ -236,27 +231,27 @@ void configure_systick(void)
  * @brief Configures ADC1 with DMA for humidity sensor readings.
  */
  
-void adc_setup(void)
-{
-    /* Enable ADC1 clock */
+void adc_setup(void) {
+    // Habilitar el reloj para el ADC y el puerto GPIO asociado
     rcc_periph_clock_enable(RCC_ADC1);
+    rcc_periph_clock_enable(RCC_GPIOA);
 
-    /* Configure ADC1 */
-    adc_power_off(ADC1);
-    adc_disable_scan_mode(ADC1);
-    adc_set_continuous_conversion_mode(ADC1);
-    adc_disable_external_trigger_regular(ADC1);
-    adc_set_right_aligned(ADC1);
-    adc_set_sample_time(ADC1, ADC_CHANNEL_hum, ADC_SMPR_SMP_55DOT5CYC); /* Set sample time */
+    // Configuración básica del ADC
+    adc_power_off(ADC1);                         // Apagar el ADC antes de la configuración
+    adc_disable_scan_mode(ADC1);                 // Desactivar modo escaneo
+    adc_set_single_conversion_mode(ADC1);        // Modo de conversión única
+    adc_enable_external_trigger_regular(ADC1, ADC_CR2_EXTSEL_SWSTART);
+    adc_set_right_aligned(ADC1);                 // Alinear a la derecha el resultado
+    adc_set_sample_time_on_all_channels(ADC1, ADC_SMPR_SMP_239DOT5CYC); // Tiempo de muestreo
 
+    // Habilitar DMA en el ADC
     adc_enable_dma(ADC1);
-    /* Calibrate ADC1 */
     adc_power_on(ADC1);
-    adc_reset_calibration(ADC1);
-    adc_calibrate(ADC1);
-    adc_start_conversion_regular(ADC1);
-
+    
+    // Esperar el tiempo de encendido del ADC
+    for (int i = 0; i < 800000; i++) __asm__("nop");
 }
+
 
 
 uint16_t read_adc(uint32_t channel)
