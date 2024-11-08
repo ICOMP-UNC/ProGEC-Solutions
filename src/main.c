@@ -65,22 +65,19 @@ int main(void)
 
     while (TRUE)
     {
-      for(int i = 0; i<ADC_BUFFER_SIZE; i++){
-      if(adc_buffer[i] != 0){
+      int i = 0;
+      if(i == 0){
+          gpio_set(LED_PORT, GREEN_LED_PIN);
+          gpio_set(LED_PORT, YELLOW_LED_PIN);
+          gpio_set(LED_PORT, RED_LED_PIN);
+          gpio_set(BUZZER_PORT, BUZZER_PIN);
+      } else {
         gpio_clear(LED_PORT, GREEN_LED_PIN);
-        gpio_set(LED_PORT, RED_LED_PIN);
-      }else {
-        gpio_set(LED_PORT, GREEN_LED_PIN);
+        gpio_clear(LED_PORT, YELLOW_LED_PIN);
         gpio_clear(LED_PORT, RED_LED_PIN);
-      }
-      }
-      if(buzzer_mode == ON){
         gpio_clear(BUZZER_PORT, BUZZER_PIN);
       }
-      else{
-        gpio_set(BUZZER_PORT, BUZZER_PIN);
-      }
-
+    
       env_hum = adc_buffer[4];
       env_hum  = (env_hum * 3.3 / 4096.0) * 100; // Convert ADC value to humidity
 
@@ -268,6 +265,7 @@ void adc_setup(void) {
     // Esperar el tiempo de encendido del ADC
     for (int i = 0; i < 800000; i++) __asm__("nop");
 }
+
 
 
 
