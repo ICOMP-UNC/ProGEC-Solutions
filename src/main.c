@@ -43,7 +43,8 @@ void update_vib_frequency(void);
 void control_leds_based_on_hum(uint16_t hum);
 uint16_t read_adc(uint32_t channel);
 
-void configure_uart(void);
+void configure_UART(void);
+void configure_PWM(void);
 void send_uart_data(uint16_t vib_freq, uint16_t env_hum);
 //uint8_t usart1_rx_buffer[128]; // Define the buffer with an appropriate size
 
@@ -64,8 +65,8 @@ int main(void)
     
     while (TRUE)
     {
-      send_uart_data(vib_freq, env_hum);
-      control_buzzer_pwm(ON, BUZZER_FREQ);
+      //send_uart_data(vib_freq, env_hum);
+      //control_buzzer_pwm(ON, BUZZER_FREQ);
       /*
       if(buzzer_mode == ON){
         gpio_clear(BUZZER_PORT, BUZZER_PIN);
@@ -78,8 +79,6 @@ int main(void)
     return 0;
 }
 
-
-
 /**
  * @brief Configures the system clock to 72 MHz using an 8 MHz external crystal.
  */
@@ -87,8 +86,6 @@ void system_clock_setup(void)
 {
     rcc_clock_setup_pll(&rcc_hse_configs[RCC_CLOCK_HSE8_72MHZ]);
 }
-
-
 
 void analyze_and_update_system(void) // esto es asincrono a la interrupcion
 {
@@ -248,15 +245,25 @@ void control_leds_based_on_hum(uint16_t hum)
 void configure_PWM()
 {
   rcc_periph_clock_enable(RCC_TIM3);
-  timer_reset(TIM3);
+  gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO6);
   timer_set_mode(TIM3, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
 
-  timer_set_prescaler(TIM3, 720 - 1);  // ejemplo para prescaler
-  timer_set_period(TIM3, 1000 - 1);    // ejemplo para periodo
+  // Configura el pin del buzzer (por ejemplo, PA6) como salida alternativa en modo push-pull
+  gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO6);
+  timer_set_mode(TIM3, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
+
+  /* Timer configuration */
+  timer_set_prescaler(TIM3, 720 - 1);  
+  timer_set_period(TIM3, 1000 - 1);   
   timer_enable_oc_output(TIM3, TIM_OC1);
   timer_set_oc_mode(TIM3, TIM_OC1, TIM_OCM_PWM1);
-  timer_set_oc_value(TIM3, TIM_OC1, 500); // config de ciclo de trabajo al 50%
+  timer_set_oc_value(TIM3, TIM_OC1, 500); // Duty cycle al 50%
   timer_enable_counter(TIM3);
+
+  // Habilita la interrupción del Timer 3
+  timer_enable_irq(TIM3, TIM_DIER_UIE);
+  nvic_enable_irq(NVIC_TIM3_IRQ);
+
 } 
 
 void control_buzzer_pwm(int mode, int frequency) {
@@ -270,6 +277,14 @@ void control_buzzer_pwm(int mode, int frequency) {
   }
 }
 
+void tim3_isr(void) {
+    if (timer_get_flag(TIM3, TIM_SR_UIF)) {
+      timer_clear_flag(TIM3, TIM_SR_UIF);
+      // Aquí puedes manejar la interrupción, por ejemplo, alternar el estado del buzzer
+      buzzer_mode = !buzzer_mode;
+      control_buzzer_pwm(buzzer_mode, 1000); // Ajusta la frecuencia según sea necesario
+  }
+}
 void configure_UART()
 {
   rcc_periph_clock_enable(RCC_USART1);
