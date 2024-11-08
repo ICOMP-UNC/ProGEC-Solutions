@@ -69,6 +69,9 @@ int main(void)
       if(adc_buffer[i] != 0){
         gpio_clear(LED_PORT, GREEN_LED_PIN);
         gpio_set(LED_PORT, RED_LED_PIN);
+      }else {
+        gpio_set(LED_PORT, GREEN_LED_PIN);
+        gpio_clear(LED_PORT, RED_LED_PIN);
       }
       }
       if(buzzer_mode == ON){
