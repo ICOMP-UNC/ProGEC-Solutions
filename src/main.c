@@ -8,7 +8,7 @@
 #include <libopencm3/stm32/dma.h>
 #include <libopencm3/stm32/adc.h>
 
-#include "../include/util.h"
+#include "util.h"
 #include "../include/pins.h"
 
 #define TRUE 1
@@ -17,59 +17,90 @@
 #define ON 1
 #define OFF 0
 
+
+uint8_t index_hist_vib; // para indexar el vector de vibraciones
+uint16_t vib_freq;  // frecuencia de los sismos 
+uint16_t historic_vib[_MAX_VIB_N];  // vibraciones pasadas de los sismos
+uint16_t env_vib;
+uint16_t env_hum;
+=======
 uint8_t usart1_tx_buffer[4]; // Yo pense que solo ibamos a transmitir, cambio el rx? 
 
-int main() 
-{
-  execute_setup(&setup);
 
-  while(TRUE) 
-  {
-    if(analyze_proc_flag == CAN_ANALYZE)  // se ejecuta cada 30 segundos (timer0)
+analyze_flag_t analyze_proc_flag = CAN_ANALYZE; 
+
+int buzzer_mode; // estado del buzzer ON/OFF
+
+void system_clock_setup(void);
+void gpio_setup(void);
+void adc_setup(void);
+void configure_systick(void);
+
+void analyze_and_update_system(void);
+void update_env_state(uint16_t adc_vib, uint16_t adc_hum);
+void update_vib_frequency(void);
+
+void control_leds_based_on_hum(uint16_t hum);
+uint16_t read_adc(uint32_t channel);
+
+//uint8_t usart1_rx_buffer[128]; // Define the buffer with an appropriate size
+
+
+/**
+ * @brief Main function.
+ * Initializes system clock, GPIO, ADC, Timer, and DMA for periodic ADC conversion and LED control.
+ */
+int main(void)
+{
+
+    while (TRUE)
     {
-      analyze_proc_flag = ANALYZING; 
-      analyze_and_update_system();
-      analyze_proc_flag = ANALYZED;
+      if(buzzer_mode == 1){
+        gpio_clear(BUZZER_PORT, BUZZER_PIN);
+      }
+      else{
+        gpio_set(BUZZER_PORT, BUZZER_PIN);
+      }
     }
-  }
-  return 0;
-}
-void systemInit(void)
-{
-    /* Configure the system clock to run at 72 MHz using an 8 MHz external crystal */
-    // Pro tip! To avoid warning messages, use the following syntax:
-    // rcc_clock_setup_pll(&rcc_hse_configs[RCC_CLOCK_HSE8_72MHZ]);
-
-    rcc_clock_setup_in_hse_8mhz_out_72mhz(); /* Use the default configuration */
-
-    /* Enable the clock for GPIOC */
-    rcc_periph_clock_enable(RCC_GPIOC);
+    return 0;
 }
 
-void analyze_and_update_system() // esto es asincrono a la interrupcion
-{
-   if (vib_freq > THRESHOLD_VIB_FREQ_H || env_hum > THRESHOLD_HUM_H) {
-    gpio_clear(LED_PORT, YELLOW_LED_PIN); 
-    gpio_clear(LED_PORT, GREEN_LED_PIN);
-    gpio_set(LED_PORT, RED_LED_PIN); 
-    buzzer_mode = OFF;
-      if(vib_freq > THRESHOLD_VIB_FREQ_H && env_hum > THRESHOLD_HUM_H)
-        buzzer_mode = ON; // alarma y led rojo
 
-  } else if(vib_freq <= THRESHOLD_VIB_FREQ_L || env_hum <= THRESHOLD_HUM_L) {
+
+/**
+ * @brief Configures the system clock to 72 MHz using an 8 MHz external crystal.
+ */
+void system_clock_setup(void)
+{
+    rcc_clock_setup_pll(&rcc_hse_configs[RCC_CLOCK_HSE8_72MHZ]);
+}
+
+
+
+void analyze_and_update_system(void) // esto es asincrono a la interrupcion
+{
+   if (env_vib > THRESHOLD_VIB_FREQ_H || env_hum > THRESHOLD_HUM_H) {
+    gpio_set(LED_PORT, YELLOW_LED_PIN); 
+    gpio_set(LED_PORT, GREEN_LED_PIN);
     gpio_clear(LED_PORT, RED_LED_PIN); 
-    gpio_clear(LED_PORT, YELLOW_LED_PIN); 
-    gpio_set(LED_PORT, GREEN_LED_PIN); //led verde encendido
-    buzzer_mode = OFF; 
+    //buzzer_mode = OFF;
+      if(vib_freq > THRESHOLD_VIB_FREQ_H && env_hum > THRESHOLD_HUM_H){
+       // buzzer_mode = ON; // alarma y led rojo
+
+  } else if(env_vib <= THRESHOLD_VIB_FREQ_L || env_hum <= THRESHOLD_HUM_L) {
+    gpio_set(LED_PORT, RED_LED_PIN); 
+    gpio_set(LED_PORT, YELLOW_LED_PIN); 
+    gpio_clear(LED_PORT, GREEN_LED_PIN); //led verde encendido
+    //buzzer_mode = OFF; 
   }//estado normal
     else{  //cualquier estado amarillo 
-    gpio_clear(LED_PORT, RED_LED_PIN); 
-    gpio_clear(LED_PORT, GREEN_LED_PIN);
-    buzzer_mode = OFF; 
-    gpio_set(LED_PORT, YELLOW_LED_PIN); 
+    gpio_set(LED_PORT, RED_LED_PIN); 
+    gpio_set(LED_PORT, GREEN_LED_PIN);
+   // buzzer_mode = OFF; 
+    gpio_clear(LED_PORT, YELLOW_LED_PIN); 
   }
-}
-void update_vib_frequency()
+}}
+void update_vib_frequency(void)
 {
   historic_vib[index_hist_vib] = env_vib;
   index_hist_vib = (index_hist_vib + 1) % _MAX_VIB_N; // circular
@@ -83,90 +114,112 @@ void update_vib_frequency()
 }
 void update_env_state(uint16_t adc_vib, uint16_t adc_hum)
 {
-  env_hum = adc_hum;
-  env_vib = adc_vib;
+  env_hum  = (adc_hum * 3.3 / 4096.0) * 100; // Convert ADC value to humidity
+  env_vib = (adc_vib * 3.3 / 4096.0) * 100; // Convert ADC value to vibration
+
+
   //Aca deberiamos procesarlos un poco mas y ver que rango nos tira el adc
 } 
-void sys_tick_handler()
+void sys_tick_handler(void)
 { 
   //Convertir datos y guardarlos
   update_env_state(read_adc(ADC_CHANNEL_hum), read_adc(ADC_CHANNEL_vib));
+  if(env_hum > 100){
+    gpio_clear(LED_PORT, YELLOW_LED_PIN);
+  }
   update_vib_frequency();
+  analyze_and_update_system();
 }
-
-void timer0_isr()
+/**
+ * @brief 
+ * void timer0_isr()
 {
   timer_clear_flag(TIM2, TIM_SR_UIF);
-  if(analyze_proc_flag == ANALYZED);
-    analyze_proc_flag = CAN_ANALYZE;
+  
 
 }
-void exti0_isr()
+ * 
+ */
+
+void exti0_isr(void)
 {
   exti_reset_request(EXTI0);
   buzzer_mode = !buzzer_mode;  
 }
-void configure_GPIO()
+
+
+/**
+ * @brief Configures GPIO pins for the three LEDs.
+ */
+void gpio_setup(void)
 {
-  rcc_periph_clock_enable(RCC_GPIOC);
-  gpio_set_mode(GPIOC, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GPIO8);
-  gpio_sert_mode(GPIOC, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, LED_TX);
+    /* Enable GPIO clocks */
+    rcc_periph_clock_enable(RCC_GPIOA);
+    rcc_periph_clock_enable(RCC_GPIOA);
+    rcc_periph_clock_enable(RCC_GPIOA);
+    gpio_set_mode(LED_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GREEN_LED_PIN);
+    gpio_set_mode(LED_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, RED_LED_PIN);
+    gpio_set_mode(LED_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, YELLOW_LED_PIN);
+
+    //config buzzer
+    rcc_periph_clock_enable(RCC_GPIOC);
+    gpio_set_mode(BUZZER_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, BUZZER_PIN);
+
+    //config switch manual
+    rcc_periph_clock_enable(RCC_GPIOA);
+    gpio_set_mode(BUTTON_PORT, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN, BUTTON_PIN);
+    gpio_set(BUTTON_PORT, BUTTON_PIN);
+    nvic_enable_irq(NVIC_EXTI0_IRQ);
+
+    exti_select_source(EXTI0, BUZZER_PORT);        /* Select PA0 as the source for EXTI0 */
+    exti_set_trigger(EXTI0, EXTI_TRIGGER_FALLING); /* Trigger on falling edge */
+    exti_enable_request(EXTI0);                    /* Enable EXTI0 interrupt request */
+
 }
 
-void configure_SYSTICK()
+/**
+ * @brief Configures the systick timer.
+ */
+void configure_systick(void)
 {
-  systick_set_reload(STK_RVR_RELOAD);
-  systick_set_clocksource(STK_CSR_CLKSOURCE_AHB);
-  systick_counter_enable();
+    systick_set_reload(rcc_ahb_frequency / 1000 * SYSTICK_INTERVAL_MS - 1); /* Set reload for SYSTICK_INTERVAL_MS */
+    systick_set_clocksource(STK_CSR_CLKSOURCE_AHB);
+    systick_counter_enable();
+    systick_interrupt_enable();
 }
 
-void configure_ADC() 
+/**
+ * @brief Configures ADC1 with DMA for humidity sensor readings.
+ */
+void adc_setup(void)
 {
-  rcc_periph_clock_enable(RCC_ADC1);
-  rcc_periph_clock_enable(RCC_GPIOA);
-  gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_ANALOG, GPIO0);
-  adc_power_off(ADC1);
-  adc_disable_scan_mode(ADC1);
-  adc_set_single_conversion_mode(ADC1);
-  adc_set_sample_time_on_all_channels(ADC1, ADC_SMPR_SMP_239DOT5CYC);
-  adc_power_on(ADC1);
-  for (int i = 0; i < 800000; i++) {
-    __asm__("nop");
-  } // Wait a bit before calibrating
-  adc_reset_calibration(ADC1);
-  adc_calibrate(ADC1);
+    rcc_periph_clock_enable(RCC_ADC1);
+    adc_power_off(ADC1);
+    adc_disable_scan_mode(ADC1);
+    adc_disable_external_trigger_regular(ADC1);
+    adc_set_sample_time(ADC1, ADC_PIN_hum, ADC_SMPR_SMP_55DOT5CYC); /* Set sample time */
+    adc_set_sample_time(ADC1, ADC_PIN_vib, ADC_SMPR_SMP_55DOT5CYC); /* Set sample time */
+    adc_power_on(ADC1);
+    adc_reset_calibration(ADC1);
+    adc_calibrate(ADC1);
+
 }
 
-void configure_TIMER()
+uint16_t read_adc(uint32_t channel)
 {
-  rcc_periph_clock_enable(RCC_TIM2);
-  timer_set_mode(TIM2, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
-  timer_set_prescaler(TIM2, 0x0000);
-  timer_set_period(TIM2, 0x0000);
-  timer_enable_irq(TIM2, TIM_DIER_UIE);
-  nvic_enable_irq(NVIC_TIM2_IRQ);
-  timer_enable_counter(TIM2);
+
+  uint8_t channels[1] = { channel };
+  adc_set_regular_sequence(ADC1, 1, channels);
+  adc_start_conversion_direct(ADC1);
+  while (!adc_eoc(ADC1));
+  return adc_read_regular(ADC1);
 }
 
-void configure_DMA() 
-{
-  rcc_periph_clock_enable(RCC_DMA1);
-  dma_set_peripheral_address(DMA1, DMA_CHANNEL1, (uint32_t)&USART1_DR);
-  dma_set_memory_address(DMA1, DMA_CHANNEL1, (uint32_t)&usart1_rx_buffer);
-  dma_set_number_of_data(DMA1, DMA_CHANNEL1, sizeof(usart1_rx_buffer));
-  dma_set_memory_size(DMA1, DMA_CHANNEL1, DMA_CCR_MSIZE_8BIT);
-  dma_set_peripheral_size(DMA1, DMA_CHANNEL1, DMA_CCR_PSIZE_8BIT);
-  dma_enable_memory_increment_mode(DMA1, DMA_CHANNEL1);
-  dma_disable_peripheral_increment_mode(DMA1, DMA_CHANNEL1);
-  dma_enable_circular_mode(DMA1, DMA_CHANNEL1);
-  dma_set_read_from_peripheral(DMA1, DMA_CHANNEL1);
-  dma_enable_transfer_complete_interrupt(DMA1, DMA_CHANNEL1);
-  dma_enable_channel(DMA1, DMA_CHANNEL1);
-  nvic_enable_irq(NVIC_DMA1_CHANNEL1_IRQ);
-}
 
-void configure_UART()
-{
+
+/*
+void control_leds_based_on_hum(uint16_t hum)
+=======
   rcc_periph_clock_enable(RCC_USART1);
   usart_set_baudrate(USART1, 9600);
   usart_set_databits(USART1, 8);                     //enviariamos 8 bits por data
@@ -193,14 +246,17 @@ void send_uart_data(uint16_t vib_freq, uint16_t env_hum){
   gpio_toggle(LED_PORT, LED_TX);                       // Para verificar si se envio
 }
 
-void configure_EXTI()
+
 {
-  rcc_periph_clock_enable(RCC_GPIOA);
-  gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN, GPIO0);
-  gpio_set(GPIOA, GPIO0);
-  rcc_periph_clock_enable(RCC_AFIO);
-  exti_select_source(EXTI0, GPIOA);
-  exti_set_trigger(EXTI0, EXTI_TRIGGER_RISING);
-  exti_enable_request(EXTI0);
-  nvic_enable_irq(NVIC_EXTI0_IRQ);
+    uint16_t humidity = (hum * 3.3 / 4096.0) * 100; // Convert ADC value to humidity
+
+    if (humidity < THRESHOLD_HUM_M)
+    {
+        gpio_clear(RED_LED_PORT, RED_LED_PIN);       
+    }
+    else
+    {
+        gpio_set(RED_LED_PORT, RED_LED_PIN);         
+    }
 }
+*/
