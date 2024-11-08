@@ -142,16 +142,7 @@ void sys_tick_handler(void)
   update_vib_frequency();
   analyze_and_update_system();
 }
-/**
- * @brief 
- * void timer0_isr()
-{
-  timer_clear_flag(TIM2, TIM_SR_UIF);
-  
 
-}
- * 
- */
 
 void exti0_isr(void)
 {
@@ -257,8 +248,8 @@ void timer2_setup(void)
   rcc_periph_reset_pulse(RST_TIM2);
 
   /* Timer configuration */
-  timer_set_prescaler(TIM2, 7200 - 1); // Prescaler for 10 kHz timer clock
-  timer_set_period(TIM2, 300000 - 1);  // Period for 30 seconds (10 kHz * 30 s)
+  timer_set_prescaler(TIM2, 36000 - 1); 
+  timer_set_period(TIM2, 1000 - 1); 
 
   /* Enable the timer interrupt for update events */
   timer_enable_irq(TIM2, TIM_DIER_UIE); // Enable interrupt on update event
@@ -272,7 +263,7 @@ void tim2_isr(void)
 {
   if (timer_get_flag(TIM2, TIM_SR_UIF)) {
     timer_clear_flag(TIM2, TIM_SR_UIF);
-    //enviar datos por uart
+    buzzer_mode = !buzzer_mode;
   }
 }
 
