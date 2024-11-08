@@ -17,6 +17,10 @@
 #define ON 1
 #define OFF 0
 
+uint32_t dutty = 0;
+//Periodo de 20K --> 0.00005s la duracion total de la señal    
+t_alto_PWM = dutty * 0.00005 / 100; // Calculamos que tiempo va a estar en alto
+t_bajo_PWM = 0.00005 - t_alto_PWM; // Calculamos que tiempo va a estar en bajo
 
 uint8_t index_hist_vib; // para indexar el vector de vibraciones
 uint16_t vib_freq;  // frecuencia de los sismos 
@@ -68,10 +72,12 @@ int main(void)
     {
       send_uart_data(vib_freq, env_hum);
       if(buzzer_mode == ON){
-        gpio_clear(BUZZER_PORT, BUZZER_PIN);
+        //gpio_clear(BUZZER_PORT, BUZZER_PIN);
+        dutty = 100;
       }
       else{
-        gpio_set(BUZZER_PORT, BUZZER_PIN);
+        //gpio_set(BUZZER_PORT, BUZZER_PIN);
+        dutty = 0;
       }
     }
     return 0;
@@ -248,8 +254,8 @@ void timer2_setup(void)
   rcc_periph_reset_pulse(RST_TIM2);
 
   /* Timer configuration */
-  timer_set_prescaler(TIM2, 36000 - 1); 
-  timer_set_period(TIM2, 1000 - 1); 
+  timer_set_prescaler(TIM2, 1); 
+  timer_set_period(TIM2, t_alto_PWM - 1); 
 
   /* Enable the timer interrupt for update events */
   timer_enable_irq(TIM2, TIM_DIER_UIE); // Enable interrupt on update event
@@ -263,8 +269,17 @@ void tim2_isr(void)
 {
   if (timer_get_flag(TIM2, TIM_SR_UIF)) {
     timer_clear_flag(TIM2, TIM_SR_UIF);
-    buzzer_mode = !buzzer_mode;
+  
+   if(buzzer_mode){
+    timer_set_period(TIM2, t_bajo_PWM - 1);
+    gpio_set(BUZZER_PORT, BUZZER_PIN);
+   }
+  else{
+    timer_set_period(TIM2, t_alto_PWM - 1);
+    gpio_clear(BUZZER_PORT, BUZZER_PIN);
   }
+  timer_enable_counter(TIM2);
+}
 }
 
 void configure_UART()
