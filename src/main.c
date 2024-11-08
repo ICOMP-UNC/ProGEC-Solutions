@@ -17,7 +17,6 @@
 #define ON 1
 #define OFF 0
 
-
 uint8_t index_hist_vib; // para indexar el vector de vibraciones
 uint16_t vib_freq;  // frecuencia de los sismos 
 uint16_t historic_vib[_MAX_VIB_N];  // vibraciones pasadas de los sismos
@@ -182,7 +181,7 @@ void dma_setup(void)
     dma_set_memory_size(DMA1, DMA_CHANNEL1, DMA_CCR_MSIZE_16BIT);     /* Memory size: 16 bits */
     dma_set_peripheral_size(DMA1, DMA_CHANNEL1, DMA_CCR_PSIZE_16BIT); /* Peripheral size: 16 bits */
     dma_enable_memory_increment_mode(DMA1, DMA_CHANNEL1);
-    dma_enable_circular_mode(DMA1, DMA_CHANNEL1); /* Enable circular mode */
+    dma_enable_circular_mode(DMA1, ADC_CHANNEL_hum); /* Enable circular mode */
 
     /* Start DMA transfer */
     dma_enable_channel(DMA1, DMA_CHANNEL1);
