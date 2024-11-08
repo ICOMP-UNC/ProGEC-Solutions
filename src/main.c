@@ -17,7 +17,6 @@
 #define ON 1
 #define OFF 0
 
-
 uint8_t index_hist_vib; // para indexar el vector de vibraciones
 uint16_t vib_freq;  // frecuencia de los sismos 
 uint16_t historic_vib[_MAX_VIB_N];  // vibraciones pasadas de los sismos
@@ -62,11 +61,12 @@ int main(void)
     configure_UART();
     configure_PWM();
     buzzer_mode = OFF;  // inicializamos el buzzer en OFF 
-    
+
     while (TRUE)
     {
       send_uart_data(vib_freq, env_hum);
       //control_buzzer_pwm(ON, BUZZER_FREQ);
+      //Testear flag de buzzer
       
       if(buzzer_mode == ON){
         gpio_clear(BUZZER_PORT, BUZZER_PIN);
@@ -151,12 +151,13 @@ void sys_tick_handler(void)
  * 
  */
 
+/*
 void exti0_isr(void)
 {
   exti_reset_request(EXTI0);
   buzzer_mode = !buzzer_mode;  
 }
-
+*/
 
 /**
  * @brief Configures GPIO pins for the three LEDs.
@@ -175,16 +176,17 @@ void gpio_setup(void)
     rcc_periph_clock_enable(RCC_GPIOC);
     gpio_set_mode(BUZZER_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, BUZZER_PIN);
 
+    /*
     //config switch manual
     rcc_periph_clock_enable(RCC_GPIOA);
     gpio_set_mode(BUTTON_PORT, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN, BUTTON_PIN);
     gpio_set(BUTTON_PORT, BUTTON_PIN);
     nvic_enable_irq(NVIC_EXTI0_IRQ);
 
-    exti_select_source(EXTI0, BUZZER_PORT);        /* Select PA0 as the source for EXTI0 */
-    exti_set_trigger(EXTI0, EXTI_TRIGGER_FALLING); /* Trigger on falling edge */
-    exti_enable_request(EXTI0);                    /* Enable EXTI0 interrupt request */
-
+    exti_select_source(EXTI0, BUZZER_PORT);        // Select PA0 as the source for EXTI0 
+    exti_set_trigger(EXTI0, EXTI_TRIGGER_FALLING); // Trigger on falling edge 
+    exti_enable_request(EXTI0);                    // Enable EXTI0 interrupt request
+    */  
 }
 
 /**
@@ -217,7 +219,6 @@ void adc_setup(void)
 
 uint16_t read_adc(uint32_t channel)
 {
-
   uint8_t channels[1] = { channel };
   adc_set_regular_sequence(ADC1, 1, channels);
   adc_start_conversion_direct(ADC1);
@@ -244,28 +245,27 @@ void control_leds_based_on_hum(uint16_t hum)
 
 void configure_PWM()
 {
-  rcc_periph_clock_enable(RCC_TIM3);
-  gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO6);
-  timer_set_mode(TIM3, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
-
-  // Configura el pin del buzzer (por ejemplo, PA6) como salida alternativa en modo push-pull
-  gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO6);
-  timer_set_mode(TIM3, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
+  rcc_periph_clock_enable(RCC_TIM2);
+  timer_reset(TIM2);
+  gpio_set_mode(BUZZER_PORT, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO6);
+  timer_set_mode(TIM2, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
 
   /* Timer configuration */
-  timer_set_prescaler(TIM3, 720 - 1);  
-  timer_set_period(TIM3, 1000 - 1);   
-  timer_enable_oc_output(TIM3, TIM_OC1);
-  timer_set_oc_mode(TIM3, TIM_OC1, TIM_OCM_PWM1);
-  timer_set_oc_value(TIM3, TIM_OC1, 500); // Duty cycle al 50%
-  timer_enable_counter(TIM3);
+  timer_set_prescaler(TIM2, 35999);  
+  timer_set_period(TIM2, 999);   
+  timer_enable_oc_output(TIM2, TIM_OC1);
 
-  // Habilita la interrupción del Timer 3
-  timer_enable_irq(TIM3, TIM_DIER_UIE);
-  nvic_enable_irq(NVIC_TIM3_IRQ);
-
+  timer_enable_irq(TIM2, TIM_DIER_UIE);
+  nvic_enable_irq(NVIC_TIM2_IRQ);
 } 
 
+void tim2_isr(void)
+{
+    timer_clear_flag(TIM2, TIM_SR_UIF);
+    buzzer_mode = !buzzer_mode;
+}
+
+/*
 void control_buzzer_pwm(int mode, int frequency) {
     if (mode == ON) {
     int period = 72000000 / (720 * frequency);        //Calculo del periodo con valores de prueba 
@@ -284,6 +284,7 @@ void tim3_isr(void) {
       control_buzzer_pwm(buzzer_mode, 1000);          // Ajusta la frecuencia según sea necesario
   }
 }
+*/
 void configure_UART()
 {
   rcc_periph_clock_enable(RCC_USART1);
