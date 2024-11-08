@@ -9,7 +9,7 @@
 #define THRESHOLD_HUM_L 0
 
 
-
+#define ADC_BUFFER_SIZE 16
 /* Define SysTick interval */
 #define SYSTICK_INTERVAL_MS 100
 

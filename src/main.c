@@ -58,11 +58,11 @@ int main(void)
 {
     system_clock_setup();
     gpio_setup();
-    adc_setup();
+    setup_adc();
     configure_systick();
     configure_UART();
     timer2_setup();
-    setup_dma(DMA1, DMA_STREAM0, DMA_CHANNEL0); // Ajusta los parámetros según tu configuración
+    setup_dma(); // Ajusta los parámetros según tu configuración
 
     buzzer_mode = OFF;  // inicializamos el buzzer en OFF 
     
@@ -90,26 +90,51 @@ int main(void)
     return 0;
 }
 
-void setup_dma(uint32_t dmaController, uint8_t stream, uint32_t channel) {
-    // Stop the DMA stream during configuration
-    dma_disable_stream(dmaController, stream);
-    dma_stream_reset(dmaController, stream);
-    dma_enable_fifo_mode(dmaController, stream);
-    dma_set_transfer_mode(dmaController, stream, DMA_SxCR_DIR_PERIPHERAL_TO_MEM);
-    dma_set_peripheral_address(dmaController, stream, (uint32_t)&ADC_DR(ADC1));
-    dma_set_memory_address(dmaController, stream, (uint32_t)adc_buffer);
-    dma_set_memory_size(dmaController, stream, DMA_SxCR_MSIZE_16BIT);
-    dma_enable_circular_mode(dmaController, stream);
-    dma_channel_select(dmaController, stream, channel);
-    dma_set_number_of_data(dmaController, stream, ADC_BUFFER_SIZE);
-    dma_enable_memory_increment_mode(dmaController, stream);
-    dma_set_peripheral_size(dmaController, stream, DMA_SxCR_PSIZE_16BIT);
-    dma_disable_peripheral_increment_mode(dmaController, stream);
-    dma_enable_transfer_complete_interrupt(dmaController, stream);
-    dma_enable_stream(dmaController, stream);
+void setup_adc(void) {
+    // Habilitar el reloj para el ADC
+    rcc_periph_clock_enable(RCC_ADC1);
+
+    // Configurar el ADC en modo de escaneo con DMA
+    adc_disable_scan_mode(ADC1);                     // Modo escaneo deshabilitado si solo tienes un canal
+    adc_enable_dma(ADC1);                            // Habilitar DMA
+    adc_set_single_conversion_mode(ADC1);            // Modo de conversión única
+    adc_set_sample_time_on_all_channels(ADC1, ADC_SMPR_SMP_239DOT5CYC); // Configuración de tiempo de muestreo
+
+    // Calibrar el ADC
+    adc_power_on(ADC1);
+    adc_reset_calibration(ADC1);
+    adc_calibrate(ADC1);
+
+    // Configurar el primer canal a muestrear
+    uint8_t channels[] = {ADC_CHANNEL_hum}; // Cambia por el canal que necesitas
+    adc_set_regular_sequence(ADC1, 1, channels);
+
+    // Iniciar la conversión
+    adc_start_conversion_direct(ADC1);
 }
 
+void setup_dma(void) {
+    // Habilitar el reloj para el DMA
+    rcc_periph_clock_enable(RCC_DMA1);
 
+    // Resetear el canal del DMA para asegurarse de que está en un estado conocido
+    dma_channel_reset(DMA1, DMA_CHANNEL1);
+
+    // Configurar el canal del DMA
+    dma_set_peripheral_address(DMA1, DMA_CHANNEL1, (uint32_t)&ADC1_DR); // Dirección del registro de datos del ADC
+    dma_set_memory_address(DMA1, DMA_CHANNEL1, (uint32_t)adc_buffer);    // Dirección del buffer de memoria
+    dma_set_number_of_data(DMA1, DMA_CHANNEL1, 16);                      // Tamaño del buffer (16 muestras)
+
+    // Configuración de transferencia
+    dma_set_read_from_peripheral(DMA1, DMA_CHANNEL1);   // Leer desde el periférico (ADC)
+    dma_enable_memory_increment_mode(DMA1, DMA_CHANNEL1); // Incremento de dirección de memoria
+    dma_set_peripheral_size(DMA1, DMA_CHANNEL1, DMA_CCR_PSIZE_16BIT); // Tamaño de dato en periférico
+    dma_set_memory_size(DMA1, DMA_CHANNEL1, DMA_CCR_MSIZE_16BIT);      // Tamaño de dato en memoria
+    dma_set_priority(DMA1, DMA_CHANNEL1, DMA_CCR_PL_HIGH);             // Alta prioridad
+
+    // Habilitar el DMA
+    dma_enable_channel(DMA1, DMA_CHANNEL1);
+}
 /**
  * @brief Configures the system clock to 72 MHz using an 8 MHz external crystal.
  */
@@ -234,37 +259,6 @@ void configure_systick(void)
 /**
  * @brief Configures ADC1 with DMA for humidity sensor readings.
  */
-void adc_setup(void)
-{
-    /* Enable ADC1 clock */
-    rcc_periph_clock_enable(RCC_ADC1);
-
-    /* Enable GPIO clock for ADC pin */
-    rcc_periph_clock_enable(RCC_GPIOA);
-
-    /* Configure PA0 (ADC Channel 0) as analog input */
-    gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_ANALOG, GPIO0);
-
-    /* Configure ADC1 */
-    adc_power_off(ADC1);
-    adc_disable_scan_mode(ADC1);
-    adc_set_continuous_conversion_mode(ADC1);
-    adc_disable_external_trigger_regular(ADC1);
-    adc_set_right_aligned(ADC1);
-    adc_set_sample_time(ADC1, ADC_CHANNEL_hum, ADC_SMPR_SMP_55DOT5CYC); /* Set sample time */
-
-    /* Enable ADC DMA mode */
-    adc_enable_dma(ADC1);
-    adc_enable_dma_circular_mode(ADC1);
-
-    /* Calibrate ADC1 */
-    adc_power_on(ADC1);
-    adc_reset_calibration(ADC1);
-    adc_calibrate(ADC1);
-
-    /* Start ADC conversion */
-    adc_start_conversion_regular(ADC1);
-}
 
 uint16_t read_adc(uint32_t channel)
 {
