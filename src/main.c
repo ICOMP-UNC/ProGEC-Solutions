@@ -59,17 +59,21 @@ int main(void)
     adc_setup();
     configure_systick();
     configure_UART();
+    configure_PWM();
     buzzer_mode = OFF;  // inicializamos el buzzer en OFF 
     
     while (TRUE)
     {
       send_uart_data(vib_freq, env_hum);
+      control_buzzer_pwm(ON, BUZZER_FREQ);
+      /*
       if(buzzer_mode == ON){
         gpio_clear(BUZZER_PORT, BUZZER_PIN);
       }
       else{
         gpio_set(BUZZER_PORT, BUZZER_PIN);
       }
+      */
     }
     return 0;
 }
@@ -164,12 +168,12 @@ void gpio_setup(void)
 {
     /* Enable GPIO clocks */
     rcc_periph_clock_enable(RCC_GPIOA);
-    rcc_periph_clock_enable(RCC_GPIOA);
-    rcc_periph_clock_enable(RCC_GPIOA);
     gpio_set_mode(LED_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GREEN_LED_PIN);
     gpio_set_mode(LED_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, RED_LED_PIN);
     gpio_set_mode(LED_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, YELLOW_LED_PIN);
     gpio_set_mode(LED_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL,LED_TX);
+    gpio_set_mode(BUZZER_PORT, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, BUZZER_PIN);
+
     //config buzzer
     rcc_periph_clock_enable(RCC_GPIOC);
     gpio_set_mode(BUZZER_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, BUZZER_PIN);
@@ -240,6 +244,31 @@ void control_leds_based_on_hum(uint16_t hum)
   nvic_enable_irq(NVIC_USART1_IRQ);
 }
 */
+
+void configure_PWM()
+{
+  rcc_periph_clock_enable(RCC_TIM3);
+  timer_reset(TIM3);
+  timer_set_mode(TIM3, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
+
+  timer_set_prescaler(TIM3, 720 - 1);  // ejemplo para prescaler
+  timer_set_period(TIM3, 1000 - 1);    // ejemplo para periodo
+  timer_enable_oc_output(TIM3, TIM_OC1);
+  timer_set_oc_mode(TIM3, TIM_OC1, TIM_OCM_PWM1);
+  timer_set_oc_value(TIM3, TIM_OC1, 500); // config de ciclo de trabajo al 50%
+  timer_enable_counter(TIM3);
+} 
+
+void control_buzzer_pwm(int mode, int frequency) {
+    if (mode == ON) {
+    int period = 72000000 / (720 * frequency);        //Calculo del periodo con valores de prueba 
+    timer_set_period(TIM3, period - 1);
+    timer_set_oc_value(TIM3, TIM_OC1, period / 2);    //Definimos ciclo de trabajo al 50%
+    timer_enable_oc_output(TIM3, TIM_OC1);            // Activa el canal de salida
+  } else {
+      timer_disable_oc_output(TIM3, TIM_OC1);         // Apaga el buzzer
+  }
+}
 
 void configure_UART()
 {

@@ -14,7 +14,7 @@
  * PORT definitions
  */
 #define LED_PORT GPIOA
-#define BUZZER_PORT GPIOC
+#define BUZZER_PORT GPIOA
 #define BUTTON_PORT GPIOA
 #define ADC_PORT GPIOA
 

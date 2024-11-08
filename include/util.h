@@ -8,7 +8,7 @@
 #define THRESHOLD_HUM_M 50
 #define THRESHOLD_HUM_L 0
 
-
+#define BUZZER_FREQ 1000
 
 /* Define SysTick interval */
 #define SYSTICK_INTERVAL_MS 100
