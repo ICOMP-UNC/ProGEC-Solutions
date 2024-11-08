@@ -53,30 +53,19 @@ int main(void)
 {
     system_clock_setup();
     gpio_setup();
-    adc_setup();
-    dma_setup();
-    configure_systick();
-    adc_set_regular_sequence(ADC1, 1, ADC_CHANNEL_hum);
+    //adc_setup();
+    //dma_setup();
+    //configure_systick();
+    //adc_set_regular_sequence(ADC1, 1, ADC_CHANNEL_hum);
 
     // Iniciar conversiones continuas
-    adc_start_conversion_regular(ADC1);
+   // adc_start_conversion_regular(ADC1);
     
     buzzer_mode = OFF;  // inicializamos el buzzer en OFF 
 
     while (TRUE)
     {
-      int i = 0;
-      if(i == 0){
-          gpio_set(LED_PORT, GREEN_LED_PIN);
-          gpio_set(LED_PORT, YELLOW_LED_PIN);
-          gpio_set(LED_PORT, RED_LED_PIN);
-          gpio_set(BUZZER_PORT, BUZZER_PIN);
-      } else {
-        gpio_clear(LED_PORT, GREEN_LED_PIN);
-        gpio_clear(LED_PORT, YELLOW_LED_PIN);
-        gpio_clear(LED_PORT, RED_LED_PIN);
-        gpio_clear(BUZZER_PORT, BUZZER_PIN);
-      }
+     
     
       env_hum = adc_buffer[4];
       env_hum  = (env_hum * 3.3 / 4096.0) * 100; // Convert ADC value to humidity
