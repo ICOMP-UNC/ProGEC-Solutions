@@ -80,7 +80,7 @@ int main(void)
       */
      read_adc(ADC_CHANNEL_hum);
       read_adc(ADC_CHANNEL_vib);
-      
+
       if(adc_buffer[8] > 0){
         gpio_set(LED_PORT, YELLOW_LED_PIN);
         gpio_set(LED_PORT, GREEN_LED_PIN);
@@ -194,12 +194,12 @@ void update_env_state(uint16_t adc_vib, uint16_t adc_hum)
 void sys_tick_handler(void)
 { 
   //Convertir datos y guardarlos
-  update_env_state(read_adc(ADC_CHANNEL_hum), read_adc(ADC_CHANNEL_vib));
-  if(env_hum > 100){
-    gpio_clear(LED_PORT, YELLOW_LED_PIN);
-  }
-  update_vib_frequency();
-  analyze_and_update_system();
+ // update_env_state(read_adc(ADC_CHANNEL_hum), read_adc(ADC_CHANNEL_vib));
+//  if(env_hum > 100){
+ ////   gpio_clear(LED_PORT, YELLOW_LED_PIN);
+ // }
+ // update_vib_frequency();
+ // analyze_and_update_system();
 }
 /**
  * @brief 
