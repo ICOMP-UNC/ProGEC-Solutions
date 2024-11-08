@@ -29,7 +29,7 @@
 #define ADC_PIN_vib GPIO1
 #define ADC_PIN_hum GPIO2
 
-#define LED_TX  GPIO13  
+#define LED_TX  GPIO10 
 /**
  * ADC channel definitions
  */

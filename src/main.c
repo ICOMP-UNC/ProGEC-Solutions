@@ -23,6 +23,7 @@ uint16_t vib_freq;  // frecuencia de los sismos
 uint16_t historic_vib[_MAX_VIB_N];  // vibraciones pasadas de los sismos
 uint16_t env_vib;
 uint16_t env_hum;
+
 uint8_t usart1_tx_buffer[4]; // Yo pense que solo ibamos a transmitir, cambio el rx? 
 
 
@@ -164,7 +165,7 @@ void gpio_setup(void)
     gpio_set_mode(LED_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GREEN_LED_PIN);
     gpio_set_mode(LED_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, RED_LED_PIN);
     gpio_set_mode(LED_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, YELLOW_LED_PIN);
-
+    gpio_set_mode(LED_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO, GPIO_CNF_OUTPUT_PUSHPULL,LED_TX);
     //config buzzer
     rcc_periph_clock_enable(RCC_GPIOC);
     gpio_set_mode(BUZZER_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, BUZZER_PIN);
@@ -226,6 +227,20 @@ void control_leds_based_on_hum(uint16_t hum)
 =======
   rcc_periph_clock_enable(RCC_USART1);
   usart_set_baudrate(USART1, 9600);
+  usart_set_databits(USART1, 8);                     
+  usart_set_stopbits(USART1, USART_STOPBITS_1);
+  usart_set_parity(USART1, USART_PARITY_NONE);
+  usart_set_mode(USART1, USART_MODE_TX);
+  usart_set_flow_control(USART1, USART_FLOWCONTROL_NONE);
+  usart_enable(USART1);
+  nvic_enable_irq(NVIC_USART1_IRQ);
+}
+*/
+
+void configure_UART()
+{
+  rcc_periph_clock_enable(RCC_USART1);
+  usart_set_baudrate(USART1, 9600);
   usart_set_databits(USART1, 8);                     //enviariamos 8 bits por data
   usart_set_stopbits(USART1, USART_STOPBITS_1);
   usart_set_parity(USART1, USART_PARITY_NONE);
@@ -247,10 +262,10 @@ void send_uart_data(uint16_t vib_freq, uint16_t env_hum){
     usart_wait_send_ready(USART1);                     // Funcion que el buffer este vacio
     usart_send_blocking(USART1, usart1_tx_buffer[i]);  // Enviamos el byte en bloque
   }
-  gpio_toggle(LED_PORT, LED_TX);                       // Para verificar si se envio
+  gpio_toggle(LED_PORT, LED_TX);                       // Para verificar si se en
 }
 
-
+/*
 {
     uint16_t humidity = (hum * 3.3 / 4096.0) * 100; // Convert ADC value to humidity
 
