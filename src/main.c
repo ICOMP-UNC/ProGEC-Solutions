@@ -58,11 +58,11 @@ int main(void)
 {
     system_clock_setup();
     gpio_setup();
+    setup_dma(); // Ajusta los parámetros según tu configuración
     setup_adc();
     configure_systick();
     configure_UART();
     timer2_setup();
-    setup_dma(); // Ajusta los parámetros según tu configuración
 
     buzzer_mode = OFF;  // inicializamos el buzzer en OFF 
     
@@ -80,11 +80,13 @@ int main(void)
 
       */
      
-      if(adc_buffer[2] > 0){
+      if(adc_buffer[8] > 0){
         gpio_set(LED_PORT, YELLOW_LED_PIN);
+        gpio_set(LED_PORT, GREEN_LED_PIN);
       }
       else{
         gpio_clear(LED_PORT, YELLOW_LED_PIN);
+        gpio_set(LED_PORT, RED_LED_PIN);
       }
     }
     return 0;
