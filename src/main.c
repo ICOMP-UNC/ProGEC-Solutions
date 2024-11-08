@@ -17,7 +17,7 @@
 #define ON 1
 #define OFF 0
 
-uint8_t usart1_rx_buffer[128]; // Define the buffer with an appropriate size
+uint8_t usart1_tx_buffer[4]; // Yo pense que solo ibamos a transmitir, cambio el rx? 
 
 int main() 
 {
@@ -104,12 +104,13 @@ void timer0_isr()
 void exti0_isr()
 {
   exti_reset_request(EXTI0);
-  buzzer_mode = !buzzer_mode;
+  buzzer_mode = !buzzer_mode;  
 }
 void configure_GPIO()
 {
   rcc_periph_clock_enable(RCC_GPIOC);
   gpio_set_mode(GPIOC, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GPIO8);
+  gpio_sert_mode(GPIOC, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, LED_TX);
 }
 
 void configure_SYSTICK()
@@ -168,14 +169,28 @@ void configure_UART()
 {
   rcc_periph_clock_enable(RCC_USART1);
   usart_set_baudrate(USART1, 9600);
-  usart_set_databits(USART1, 8);
+  usart_set_databits(USART1, 8);                     //enviariamos 8 bits por data
   usart_set_stopbits(USART1, USART_STOPBITS_1);
   usart_set_parity(USART1, USART_PARITY_NONE);
-  usart_set_mode(USART1, USART_MODE_TX_RX);
+  usart_set_mode(USART1, USART_MODE_TX);
   usart_set_flow_control(USART1, USART_FLOWCONTROL_NONE);
   usart_enable(USART1);
-  usart_enable_rx_interrupt(USART1);
   nvic_enable_irq(NVIC_USART1_IRQ);
+}
+
+void send_uart_data(uint16_t vib_freq, uint16_t env_hum){
+    //como se pueden enviar datos cada 1 byte, y nuestros datos son de 2 bytes
+    usart1_tx_buffer[0] = (vib_freq >> 8) & 0xFF;   // Parte alta de vib_freq
+    usart1_tx_buffer[1] = vib_freq & 0xFF;          // Parte baja de vib_freq
+    usart1_tx_buffer[2] = (env_hum >> 8) & 0xFF;    // Parte alta de env_hum
+    usart1_tx_buffer[3] = env_hum & 0xFF;           // Parte baja de env_hum
+
+  //capaz 0xff podemos definirlo como una constante
+  for (int i = 0; i < 4; i++) {                        // Enviamos los 4 bytes uno por uno
+    usart_wait_send_ready(USART1);                     // Funcion que el buffer este vacio
+    usart_send_blocking(USART1, usart1_tx_buffer[i]);  // Enviamos el byte en bloque
+  }
+  gpio_toggle(LED_PORT, LED_TX);                       // Para verificar si se envio
 }
 
 void configure_EXTI()
