@@ -43,6 +43,8 @@ void update_vib_frequency(void);
 void control_leds_based_on_hum(uint16_t hum);
 uint16_t read_adc(uint32_t channel);
 
+void configure_uart(void);
+void send_uart_data(uint16_t vib_freq, uint16_t env_hum);
 //uint8_t usart1_rx_buffer[128]; // Define the buffer with an appropriate size
 
 
@@ -56,10 +58,12 @@ int main(void)
     gpio_setup();
     adc_setup();
     configure_systick();
+    configure_UART();
     buzzer_mode = OFF;  // inicializamos el buzzer en OFF 
     
     while (TRUE)
     {
+      send_uart_data(vib_freq, env_hum);
       if(buzzer_mode == ON){
         gpio_clear(BUZZER_PORT, BUZZER_PIN);
       }
@@ -165,7 +169,7 @@ void gpio_setup(void)
     gpio_set_mode(LED_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GREEN_LED_PIN);
     gpio_set_mode(LED_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, RED_LED_PIN);
     gpio_set_mode(LED_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, YELLOW_LED_PIN);
-    gpio_set_mode(LED_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO, GPIO_CNF_OUTPUT_PUSHPULL,LED_TX);
+    gpio_set_mode(LED_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL,LED_TX);
     //config buzzer
     rcc_periph_clock_enable(RCC_GPIOC);
     gpio_set_mode(BUZZER_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, BUZZER_PIN);
