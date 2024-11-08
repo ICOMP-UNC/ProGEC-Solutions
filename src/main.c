@@ -34,7 +34,6 @@ int buzzer_mode; // estado del buzzer ON/OFF
 
 void system_clock_setup(void);
 void gpio_setup(void);
-void adc_setup(void);
 void configure_systick(void);
 
 void analyze_and_update_system(void);
@@ -79,7 +78,7 @@ int main(void)
       }
 
       */
-     
+     read_adc(ADC_CHANNEL_hum);
       if(adc_buffer[8] > 0){
         gpio_set(LED_PORT, YELLOW_LED_PIN);
         gpio_set(LED_PORT, GREEN_LED_PIN);
