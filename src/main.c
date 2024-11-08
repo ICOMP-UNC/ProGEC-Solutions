@@ -65,6 +65,14 @@ int main(void)
       else{
         gpio_set(BUZZER_PORT, BUZZER_PIN);
       }
+
+       env_hum = adc_buffer[0];
+  if(env_hum > 50){
+    gpio_clear(LED_PORT, RED_LED_PIN);
+    }
+    if(env_hum > 0 && env_hum <= 50)
+    {
+      gpio_clear(LED_PORT, YELLOW_LED_PIN);
     }
     return 0;
 }
@@ -83,9 +91,7 @@ void system_clock_setup(void)
 
 void analyze_and_update_system(void) // esto es asincrono a la interrupcion
 {
-  env_hum = adc_buffer[0];
-  if(env_hum > 50){
-    gpio_clear(LED_PORT, RED_LED_PIN);
+ 
     /*
       if (env_vib > THRESHOLD_VIB_FREQ_H || env_hum > THRESHOLD_HUM_H) {
     gpio_set(LED_PORT, YELLOW_LED_PIN); 
@@ -109,7 +115,7 @@ void analyze_and_update_system(void) // esto es asincrono a la interrupcion
   }
     */
  
-}}
+}
 void update_vib_frequency(void)
 {
   historic_vib[index_hist_vib] = env_vib;
