@@ -47,6 +47,7 @@ void configure_uart(void);
 void send_uart_data(uint16_t vib_freq, uint16_t env_hum);
 //uint8_t usart1_rx_buffer[128]; // Define the buffer with an appropriate size
 
+void timer2_setup(void);
 
 /**
  * @brief Main function.
@@ -59,7 +60,9 @@ int main(void)
     adc_setup();
     configure_systick();
     configure_UART();
+    timer2_setup();
     buzzer_mode = OFF;  // inicializamos el buzzer en OFF 
+    
     
     while (TRUE)
     {
@@ -240,6 +243,38 @@ void control_leds_based_on_hum(uint16_t hum)
   nvic_enable_irq(NVIC_USART1_IRQ);
 }
 */
+void timer2_setup(void)
+{
+  timer_set_mode(TIM2, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
+
+  /* Enable Timer 2 clock */
+  rcc_periph_clock_enable(RCC_TIM2);
+
+  /* Enable TIM2 interrupt. */
+  nvic_enable_irq(NVIC_TIM2_IRQ);
+
+  /* Reset TIM2 peripheral to defaults. */
+  rcc_periph_reset_pulse(RST_TIM2);
+
+  /* Timer configuration */
+  timer_set_prescaler(TIM2, 7200 - 1); // Prescaler for 10 kHz timer clock
+  timer_set_period(TIM2, 300000 - 1);  // Period for 30 seconds (10 kHz * 30 s)
+
+  /* Enable the timer interrupt for update events */
+  timer_enable_irq(TIM2, TIM_DIER_UIE); // Enable interrupt on update event
+
+  /* Start Timer 2 */
+  timer_enable_counter(TIM2);
+}
+
+
+void tim2_isr(void)
+{
+  if (timer_get_flag(TIM2, TIM_SR_UIF)) {
+    timer_clear_flag(TIM2, TIM_SR_UIF);
+    //enviar datos por uart
+  }
+}
 
 void configure_UART()
 {
