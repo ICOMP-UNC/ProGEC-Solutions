@@ -56,7 +56,10 @@ int main(void)
     adc_setup();
     dma_setup();
     configure_systick();
+    adc_set_regular_sequence(ADC1, 1, &ADC_CHANNEL_hum);
 
+    // Iniciar conversiones continuas
+    adc_start_conversion_regular(ADC1);
     buzzer_mode = OFF;  // inicializamos el buzzer en OFF 
 
     while (TRUE)
