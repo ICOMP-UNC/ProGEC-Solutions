@@ -65,16 +65,16 @@ int main(void)
     
     while (TRUE)
     {
-      //send_uart_data(vib_freq, env_hum);
+      send_uart_data(vib_freq, env_hum);
       //control_buzzer_pwm(ON, BUZZER_FREQ);
-      /*
+      
       if(buzzer_mode == ON){
         gpio_clear(BUZZER_PORT, BUZZER_PIN);
       }
       else{
         gpio_set(BUZZER_PORT, BUZZER_PIN);
       }
-      */
+      
     }
     return 0;
 }
@@ -280,9 +280,8 @@ void control_buzzer_pwm(int mode, int frequency) {
 void tim3_isr(void) {
     if (timer_get_flag(TIM3, TIM_SR_UIF)) {
       timer_clear_flag(TIM3, TIM_SR_UIF);
-      // Aquí puedes manejar la interrupción, por ejemplo, alternar el estado del buzzer
       buzzer_mode = !buzzer_mode;
-      control_buzzer_pwm(buzzer_mode, 1000); // Ajusta la frecuencia según sea necesario
+      control_buzzer_pwm(buzzer_mode, 1000);          // Ajusta la frecuencia según sea necesario
   }
 }
 void configure_UART()
@@ -310,7 +309,7 @@ void send_uart_data(uint16_t vib_freq, uint16_t env_hum){
     usart_wait_send_ready(USART1);                     // Funcion que el buffer este vacio
     usart_send_blocking(USART1, usart1_tx_buffer[i]);  // Enviamos el byte en bloque
   }
-  gpio_toggle(LED_PORT, LED_TX);                       // Para verificar si se en
+  gpio_set(LED_PORT, LED_TX);
 }
 
 /*
