@@ -264,16 +264,34 @@ void configure_systick(void)
  */
 void adc_setup(void)
 {
+    /* Enable ADC1 clock */
     rcc_periph_clock_enable(RCC_ADC1);
+
+    /* Enable GPIO clock for ADC pin */
+    rcc_periph_clock_enable(RCC_GPIOA);
+
+    /* Configure PA0 (ADC Channel 0) as analog input */
+    gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_ANALOG, GPIO0);
+
+    /* Configure ADC1 */
     adc_power_off(ADC1);
     adc_disable_scan_mode(ADC1);
+    adc_set_continuous_conversion_mode(ADC1);
     adc_disable_external_trigger_regular(ADC1);
-    adc_set_sample_time(ADC1, ADC_PIN_hum, ADC_SMPR_SMP_55DOT5CYC); /* Set sample time */
-    adc_set_sample_time(ADC1, ADC_PIN_vib, ADC_SMPR_SMP_55DOT5CYC); /* Set sample time */
+    adc_set_right_aligned(ADC1);
+    adc_set_sample_time(ADC1, ADC_CHANNEL_hum, ADC_SMPR_SMP_55DOT5CYC); /* Set sample time */
+
+    /* Enable ADC DMA mode */
+    adc_enable_dma(ADC1);
+    adc_enable_dma_circular_mode(ADC1);
+
+    /* Calibrate ADC1 */
     adc_power_on(ADC1);
     adc_reset_calibration(ADC1);
     adc_calibrate(ADC1);
 
+    /* Start ADC conversion */
+    adc_start_conversion_regular(ADC1);
 }
 
 uint16_t read_adc(uint32_t channel)
