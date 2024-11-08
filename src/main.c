@@ -60,7 +60,9 @@ int main(void)
     adc_setup();
     configure_systick();
     configure_UART();
+    timer2_setup();
     buzzer_mode = OFF;  // inicializamos el buzzer en OFF 
+    
     
     while (TRUE)
     {
@@ -265,19 +267,12 @@ void timer2_setup(void)
   timer_enable_counter(TIM2);
 }
 
-void tim2_isr(void)
-{
-  if (timer_get_flag(TIM2, TIM_SR_UIF)) {
-    timer_clear_flag(TIM2, TIM_SR_UIF);
-    // Your interrupt handling code here
-  }
-}
 
 void tim2_isr(void)
 {
   if (timer_get_flag(TIM2, TIM_SR_UIF)) {
     timer_clear_flag(TIM2, TIM_SR_UIF);
-    // Your interrupt handling code here
+    //enviar datos por uart
   }
 }
 
