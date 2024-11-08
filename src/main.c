@@ -23,7 +23,6 @@ uint16_t vib_freq;  // frecuencia de los sismos
 uint16_t historic_vib[_MAX_VIB_N];  // vibraciones pasadas de los sismos
 uint16_t env_vib;
 uint16_t env_hum;
-=======
 uint8_t usart1_tx_buffer[4]; // Yo pense que solo ibamos a transmitir, cambio el rx? 
 
 
@@ -52,10 +51,15 @@ uint16_t read_adc(uint32_t channel);
  */
 int main(void)
 {
-
+    system_clock_setup();
+    gpio_setup();
+    adc_setup();
+    configure_systick();
+    buzzer_mode = OFF;  // inicializamos el buzzer en OFF 
+    
     while (TRUE)
     {
-      if(buzzer_mode == 1){
+      if(buzzer_mode == ON){
         gpio_clear(BUZZER_PORT, BUZZER_PIN);
       }
       else{
