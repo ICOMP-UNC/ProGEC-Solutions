@@ -60,10 +60,17 @@ int main(void)
 
     // Iniciar conversiones continuas
     adc_start_conversion_regular(ADC1);
+    
     buzzer_mode = OFF;  // inicializamos el buzzer en OFF 
 
     while (TRUE)
     {
+      for(int i = 0; i<ADC_BUFFER_SIZE; i++){
+      if(adc_buffer[i] != 0){
+        gpio_clear(LED_PORT, GREEN_LED_PIN);
+        gpio_set(LED_PORT, RED_LED_PIN);
+      }
+      }
       if(buzzer_mode == ON){
         gpio_clear(BUZZER_PORT, BUZZER_PIN);
       }
