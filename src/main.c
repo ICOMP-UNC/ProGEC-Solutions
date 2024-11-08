@@ -249,10 +249,14 @@ void adc_setup(void)
     adc_set_right_aligned(ADC1);
     adc_set_sample_time(ADC1, ADC_CHANNEL_hum, ADC_SMPR_SMP_55DOT5CYC); /* Set sample time */
 
+    adc_enable_dma(ADC1);
+    adc_enable_dma_circular_mode(ADC1);
     /* Calibrate ADC1 */
     adc_power_on(ADC1);
     adc_reset_calibration(ADC1);
     adc_calibrate(ADC1);
+    adc_start_conversion_regular(ADC1);
+
 }
 
 
