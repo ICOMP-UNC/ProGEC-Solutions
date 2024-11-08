@@ -79,6 +79,8 @@ int main(void)
 
       */
      read_adc(ADC_CHANNEL_hum);
+      read_adc(ADC_CHANNEL_vib);
+      
       if(adc_buffer[8] > 0){
         gpio_set(LED_PORT, YELLOW_LED_PIN);
         gpio_set(LED_PORT, GREEN_LED_PIN);
