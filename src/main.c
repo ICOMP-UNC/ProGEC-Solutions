@@ -44,9 +44,7 @@ uint16_t read_adc(uint32_t channel);
 void configure_UART(void);
 void configure_PWM(void);
 void send_uart_data(uint16_t vib_freq, uint16_t env_hum);
-void update_buzzer(int buzzer_mode);
-
-void timer2_setup(void);
+void control_pwm(uint32_t delay, int initial_buzzer_mode);
 
 /**
  * @brief Main function.
@@ -65,18 +63,11 @@ int main(void)
 
     while (TRUE)
     {
-      send_uart_data(vib_freq, env_hum);
-      if(buzzer_mode == ON){
-        for (uint16_t duty_cycle = 0; duty_cycle <= 1000; duty_cycle += 50)
-        {
-          timer_set_oc_value(TIM2, TIM_OC4, duty_cycle);
-            for (volatile int i = 0; i < 1000000; i++);    //Sino el cambio de Ton es muy rapido y no se nota
-        }
+      if (buzzer_mode == ON) {
+        control_pwm(DELAY_PWM, buzzer_mode);
+      } else{
+          timer_set_oc_value(TIM2, TIM_OC4, 0);
       }
-      else{
-        timer_set_oc_value(TIM2, TIM_OC4, 0);
-      }
-
       if(analyze_proc_flag == CAN_ANALYZE){
         analyze_and_update_system();
         analyze_proc_flag = ANALYZED;
@@ -308,6 +299,25 @@ void configure_PWM(void)
     timer_enable_counter(TIM2);
 }
 
+void control_pwm(uint32_t delay, int initial_buzzer_mode) {
+  for (uint32_t duty_cycle = 0; duty_cycle <= 1000; duty_cycle += 50) {
+    timer_set_oc_value(TIM2, TIM_OC4, duty_cycle);
+      for (volatile uint32_t i = 0; i < delay; i++) {
+        if (buzzer_mode != initial_buzzer_mode) {
+          return; // Salir de la función si buzzer_mode cambia
+        }
+      }
+  }
+  for (uint32_t duty_cycle = 1000; duty_cycle > 0; duty_cycle -= 50) {
+    timer_set_oc_value(TIM2, TIM_OC4, duty_cycle);
+      for (volatile uint32_t i = 0; i < delay; i++) {
+        if (buzzer_mode != initial_buzzer_mode) {
+          return; // Salir de la función si buzzer_mode cambia
+        }
+      }
+  }
+}
+
 void configure_UART()
 {
   rcc_periph_clock_enable(RCC_USART1);
@@ -321,12 +331,12 @@ void configure_UART()
   nvic_enable_irq(NVIC_USART1_IRQ);
 }
 
-void send_uart_data(uint16_t vib, uint16_t env){
+void send_uart_data(uint16_t vib, uint16_t hum){
     //como se pueden enviar datos cada 1 byte, y nuestros datos son de 2 bytes
     usart1_tx_buffer[0] = (vib >> 8) & BYTE_MASK;   // Parte alta de vib_freq
     usart1_tx_buffer[1] = vib & BYTE_MASK;          // Parte baja de vib_freq
-    usart1_tx_buffer[2] = (env >> 8) & BYTE_MASK;    // Parte alta de env_hum
-    usart1_tx_buffer[3] = env & BYTE_MASK;           // Parte baja de env_hum
+    usart1_tx_buffer[2] = (hum >> 8) & BYTE_MASK;    // Parte alta de env_hum
+    usart1_tx_buffer[3] = hum & BYTE_MASK;           // Parte baja de env_hum
 
   //capaz 0xff podemos definirlo como una constante
   for (int i = 0; i < 4; i++) {                        // Enviamos los 4 bytes uno por uno
