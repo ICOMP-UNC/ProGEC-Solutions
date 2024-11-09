@@ -22,7 +22,7 @@ uint16_t vib_freq;  // frecuencia de los sismos
 uint16_t historic_vib[_MAX_VIB_N];  // vibraciones pasadas de los sismos
 uint16_t env_vib;
 uint16_t env_hum;
-
+uint16_t adc_buffer[ADC_BUFFER_SIZE]; // buffer para guardar los valores del ADC
 uint8_t usart1_tx_buffer[4]; // Yo pense que solo ibamos a transmitir, cambio el rx? 
 
 analyze_flag_t analyze_proc_flag = CAN_ANALYZE; 
@@ -33,7 +33,7 @@ void system_clock_setup(void);
 void gpio_setup(void);
 void adc_setup(void);
 void configure_systick(void);
-
+void dma_setup(void);
 void analyze_and_update_system(void);
 void update_env_state(uint16_t adc_vib, uint16_t adc_hum);
 void update_vib_frequency(void);
@@ -56,6 +56,7 @@ int main(void)
 {
     system_clock_setup();
     gpio_setup();
+    dma_setup();
     adc_setup();
     configure_systick();
     configure_UART();
@@ -75,6 +76,11 @@ int main(void)
       else{
         timer_set_oc_value(TIM2, TIM_OC4, 0);
       }
+
+      if(analyze_proc_flag == CAN_ANALYZE){
+        analyze_and_update_system();
+        analyze_proc_flag = ANALYZED;
+      }
     }
     return 0;
 }
@@ -86,29 +92,48 @@ void system_clock_setup(void)
 {
     rcc_clock_setup_pll(&rcc_hse_configs[RCC_CLOCK_HSE8_72MHZ]);
 }
+void dma_setup(void) {
+   rcc_periph_clock_enable(RCC_DMA1);
 
+    dma_channel_reset(DMA1, DMA_CHANNEL1);
+    dma_set_peripheral_address(DMA1, DMA_CHANNEL1, (uint32_t)&ADC_DR(ADC1));
+    dma_set_memory_address(DMA1, DMA_CHANNEL1, (uint32_t)adc_buffer);
+    dma_set_number_of_data(DMA1, DMA_CHANNEL1, ADC_BUFFER_SIZE);
+    dma_set_read_from_peripheral(DMA1, DMA_CHANNEL1);
+    dma_enable_memory_increment_mode(DMA1, DMA_CHANNEL1);
+    dma_set_peripheral_size(DMA1, DMA_CHANNEL1, DMA_CCR_PSIZE_16BIT);
+    dma_set_memory_size(DMA1, DMA_CHANNEL1, DMA_CCR_MSIZE_16BIT);
+    dma_enable_circular_mode(DMA1, DMA_CHANNEL1);
+    dma_enable_transfer_complete_interrupt(DMA1, DMA_CHANNEL1);
+    dma_enable_channel(DMA1, DMA_CHANNEL1);
+
+    nvic_enable_irq(NVIC_DMA1_CHANNEL1_IRQ);
+}
 void analyze_and_update_system(void) // esto es asincrono a la interrupcion
 {
-if (env_vib > THRESHOLD_VIB_FREQ_H || env_hum > THRESHOLD_HUM_H) {
-    gpio_clear(LED_PORT, YELLOW_LED_PIN); 
-    gpio_clear(LED_PORT, GREEN_LED_PIN);
-    gpio_set(LED_PORT, RED_LED_PIN); 
-    buzzer_mode = ON;
-      if(vib_freq > THRESHOLD_VIB_FREQ_H && env_hum > THRESHOLD_HUM_H){
-        buzzer_mode = ON; // alarma y led rojo
-      }
-  } else if(env_vib <= THRESHOLD_VIB_FREQ_L || env_hum <= THRESHOLD_HUM_L) {
-    gpio_clear(LED_PORT, RED_LED_PIN); 
-    gpio_clear(LED_PORT, YELLOW_LED_PIN); 
-    gpio_set(LED_PORT, GREEN_LED_PIN); //led verde encendido
-    buzzer_mode = OFF; 
-  }//estado normal
-    else{  //cualquier estado amarillo 
-    gpio_clear(LED_PORT, RED_LED_PIN); 
-    gpio_clear(LED_PORT, GREEN_LED_PIN);
-    buzzer_mode = OFF; 
-    gpio_set(LED_PORT, YELLOW_LED_PIN); 
-  }
+ 
+        if (env_hum > THRESHOLD_HUM_H /*|| env_vib > THRESHOLD_HUM_H*/) {
+        gpio_clear(LED_PORT, YELLOW_LED_PIN);
+        gpio_clear(LED_PORT, GREEN_LED_PIN);
+        gpio_set(LED_PORT, RED_LED_PIN);
+         buzzer_mode = OFF;
+        if (env_hum > THRESHOLD_HUM_H /*&& env_vib > THRESHOLD_HUM_H*/) {
+             buzzer_mode = ON; // alarma y led rojo
+        }
+    } else if (env_hum <= THRESHOLD_HUM_L /*|| env_vib <= THRESHOLD_HUM_L*/) {
+        gpio_clear(LED_PORT, RED_LED_PIN);
+        gpio_clear(LED_PORT, YELLOW_LED_PIN);
+        gpio_set(LED_PORT, GREEN_LED_PIN); // led verde encendido
+         buzzer_mode = OFF;
+    } else { // cualquier estado amarillo
+        gpio_clear(LED_PORT, RED_LED_PIN);
+        gpio_clear(LED_PORT, GREEN_LED_PIN);
+         buzzer_mode = OFF;
+        gpio_set(LED_PORT, YELLOW_LED_PIN);
+    }
+   
+    
+   
 }
 void update_vib_frequency(void)
 {
@@ -126,17 +151,28 @@ void update_env_state(uint16_t adc_vib, uint16_t adc_hum)
 {
   env_hum  = (adc_hum * 3.3 / 4096.0) * 100; // Convert ADC value to humidity
   env_vib = (adc_vib * 3.3 / 4096.0) * 100; // Convert ADC value to vibration
-  //Aca deberiamos procesarlos un poco mas y ver que rango nos tira el adc
 } 
-void sys_tick_handler(void)
-{ 
-  //Convertir datos y guardarlos
-  update_env_state(read_adc(ADC_CHANNEL_hum), read_adc(ADC_CHANNEL_vib));
-  if(env_hum > 100){
-    gpio_clear(LED_PORT, YELLOW_LED_PIN);
-  }
-  update_vib_frequency();
-  analyze_and_update_system();
+void sys_tick_handler(void) {
+    uint16_t sum_hum = 0;
+    uint16_t sum_vib = 0;
+
+    // Convertir datos y guardarlos
+    for (int i = 0; i < ADC_BUFFER_SIZE; i++) {
+        sum_vib += adc_buffer[i];
+        // sum_hum += adc_buffer[i+1];
+    }
+
+    sum_hum = sum_hum / ADC_BUFFER_SIZE;
+    sum_vib = sum_vib / ADC_BUFFER_SIZE;
+
+    update_env_state(sum_hum, sum_vib);
+
+    if (analyze_proc_flag == ANALYZED) {
+        analyze_proc_flag = CAN_ANALYZE;
+    }
+
+    // update_vib_frequency();
+    // analyze_and_update_system();
 }
 /**
  * @brief 
@@ -192,20 +228,42 @@ void configure_systick(void)
 /**
  * @brief Configures ADC1 with DMA for humidity sensor readings.
  */
-void adc_setup(void)
-{
+void adc_setup(void) {
     rcc_periph_clock_enable(RCC_ADC1);
-    adc_power_off(ADC1);
-    adc_disable_scan_mode(ADC1);
-    adc_disable_external_trigger_regular(ADC1);
-    adc_set_sample_time(ADC1, ADC_PIN_hum, ADC_SMPR_SMP_55DOT5CYC); /* Set sample time */
-    adc_set_sample_time(ADC1, ADC_PIN_vib, ADC_SMPR_SMP_55DOT5CYC); /* Set sample time */
-    adc_power_on(ADC1);
-    adc_reset_calibration(ADC1);
-    adc_calibrate(ADC1);
+    rcc_periph_clock_enable(RCC_GPIOA);
 
+    // Configure ADC pin as analog input
+    gpio_set_mode(ADC_PORT, GPIO_MODE_INPUT, GPIO_CNF_INPUT_ANALOG, ADC_PIN_vib);
+
+    // Power off ADC before configuration
+    ADC_CR2(ADC1) &= ~ADC_CR2_ADON;
+
+    // Set ADC to continuous conversion mode
+    ADC_CR2(ADC1) |= ADC_CR2_CONT;
+
+    // Set sample time for the ADC channel
+    ADC_SMPR2(ADC1) |= (0x7 << (3 * ADC_CHANNEL_vib)); // 239.5 cycles
+
+    // Set the regular sequence to read from the vibration channel
+    ADC_SQR3(ADC1) = ADC_CHANNEL_vib;
+
+    // Enable DMA for ADC
+    ADC_CR2(ADC1) |= ADC_CR2_DMA;
+
+    // Power on ADC
+    ADC_CR2(ADC1) |= ADC_CR2_ADON;
+
+   
+    // Calibrate ADC
+    ADC_CR2(ADC1) |= ADC_CR2_RSTCAL;
+    while (ADC_CR2(ADC1) & ADC_CR2_RSTCAL);
+    ADC_CR2(ADC1) |= ADC_CR2_CAL;
+    while (ADC_CR2(ADC1) & ADC_CR2_CAL);
+
+    // Start ADC conversion
+    ADC_CR2(ADC1) |= ADC_CR2_ADON;
+    ADC_CR2(ADC1) |= ADC_CR2_SWSTART;
 }
-
 uint16_t read_adc(uint32_t channel)
 {
   uint8_t channels[1] = { channel };
@@ -292,3 +350,10 @@ void send_uart_data(uint16_t vib, uint16_t env){
     }
 }
 */
+void dma1_channel1_isr(void)
+{
+    if (dma_get_interrupt_flag(DMA1, DMA_CHANNEL1, DMA_TCIF)) {
+        dma_clear_interrupt_flags(DMA1, DMA_CHANNEL1, DMA_TCIF);
+        // Toggle LED to indicate DMA transfer complete
+    }
+}
