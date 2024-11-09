@@ -65,7 +65,7 @@ int main(void)
     {
       send_uart_data(vib_freq, env_hum);
       if(buzzer_mode == ON){
-        for (uint16_t duty_cycle = 0; duty_cycle <= 1000; duty_cycle += 100)
+        for (uint16_t duty_cycle = 0; duty_cycle <= 1000; duty_cycle += 50)
         {
           timer_set_oc_value(TIM2, TIM_OC4, duty_cycle);
             for (volatile int i = 0; i < 1000000; i++);    //Sino el cambio de Ton es muy rapido y no se nota
@@ -92,20 +92,20 @@ if (env_vib > THRESHOLD_VIB_FREQ_H || env_hum > THRESHOLD_HUM_H) {
     gpio_clear(LED_PORT, YELLOW_LED_PIN); 
     gpio_clear(LED_PORT, GREEN_LED_PIN);
     gpio_set(LED_PORT, RED_LED_PIN); 
-    //buzzer_mode = OFF;
+    buzzer_mode = ON;
       if(vib_freq > THRESHOLD_VIB_FREQ_H && env_hum > THRESHOLD_HUM_H){
-        //buzzer_mode = ON; // alarma y led rojo
+      //  buzzer_mode = ON; // alarma y led rojo
       }
   } else if(env_vib <= THRESHOLD_VIB_FREQ_L || env_hum <= THRESHOLD_HUM_L) {
     gpio_clear(LED_PORT, RED_LED_PIN); 
     gpio_clear(LED_PORT, YELLOW_LED_PIN); 
     gpio_set(LED_PORT, GREEN_LED_PIN); //led verde encendido
-    //buzzer_mode = OFF; 
+    buzzer_mode = OFF; 
   }//estado normal
     else{  //cualquier estado amarillo 
     gpio_clear(LED_PORT, RED_LED_PIN); 
     gpio_clear(LED_PORT, GREEN_LED_PIN);
-    //buzzer_mode = OFF; 
+    buzzer_mode = OFF; 
     gpio_set(LED_PORT, YELLOW_LED_PIN); 
   }
 }
@@ -151,6 +151,7 @@ void exti0_isr(void)
   exti_reset_request(EXTI0);
   buzzer_mode = !buzzer_mode;  
 }
+
 
 /**
  * @brief Configures GPIO pins for the three LEDs.
@@ -261,12 +262,12 @@ void configure_UART()
   nvic_enable_irq(NVIC_USART1_IRQ);
 }
 
-void send_uart_data(uint16_t vib_freq, uint16_t env_hum){
+void send_uart_data(uint16_t vib, uint16_t env){
     //como se pueden enviar datos cada 1 byte, y nuestros datos son de 2 bytes
-    usart1_tx_buffer[0] = (vib_freq >> 8) & 0xFF;   // Parte alta de vib_freq
-    usart1_tx_buffer[1] = vib_freq & 0xFF;          // Parte baja de vib_freq
-    usart1_tx_buffer[2] = (env_hum >> 8) & 0xFF;    // Parte alta de env_hum
-    usart1_tx_buffer[3] = env_hum & 0xFF;           // Parte baja de env_hum
+    usart1_tx_buffer[0] = (vib >> 8) & BYTE_MASK;   // Parte alta de vib_freq
+    usart1_tx_buffer[1] = vib & BYTE_MASK;          // Parte baja de vib_freq
+    usart1_tx_buffer[2] = (env >> 8) & BYTE_MASK;    // Parte alta de env_hum
+    usart1_tx_buffer[3] = env & BYTE_MASK;           // Parte baja de env_hum
 
   //capaz 0xff podemos definirlo como una constante
   for (int i = 0; i < 4; i++) {                        // Enviamos los 4 bytes uno por uno
