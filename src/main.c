@@ -25,7 +25,7 @@ uint16_t historic_vib[_MAX_VIB_N];  // vibraciones pasadas de los sismos
 uint16_t env_vib;
 uint16_t env_hum;
 uint16_t adc_buffer[ADC_BUFFER_SIZE]; // buffer para guardar los valores del ADC
-uint8_t usart1_tx_buffer[4]; // Yo pense que solo ibamos a transmitir, cambio el rx? 
+uint8_t usart1_tx_buffer[4]; 
 
 analyze_flag_t analyze_proc_flag = CAN_ANALYZE; 
 
@@ -38,12 +38,8 @@ void adc_setup(void);
 void configure_systick(void);
 void dma_setup(void);
 void analyze_and_update_system(void);
-void update_env_state(uint16_t adc_vib, uint16_t adc_hum);
+void convert_adc_to_env(uint16_t, uint16_t );
 void update_vib_frequency(void);
-
-void control_leds_based_on_hum(uint16_t hum);
-uint16_t read_adc(uint32_t channel);
-
 void configure_UART(void);
 void configure_PWM(void);
 void send_uart_data(uint16_t vib_freq, uint16_t env_hum);
@@ -142,46 +138,21 @@ void update_vib_frequency(void)
     vib_freq /= _MAX_VIB_N;   // promedio de las vibraciones
   }
 }
-void update_env_state(uint16_t adc_vib, uint16_t adc_hum)
+void convert_adc_to_env(uint16_t vib_to_convert, uint16_t hum_to_convert)
 {
-  env_hum  = (adc_hum * 3.3 / 4096.0) * 100; // Convert ADC value to humidity
-  env_vib = (adc_vib * 3.3 / 4096.0) * 100; 
-  // Convert ADC value to vibration
+  env_hum  = (hum_to_convert * 3.3 / 4096.0) * 100; 
+  env_vib = (vib_to_convert * 3.3 / 4096.0) * 100; 
 
 } 
 void sys_tick_handler(void) {
-   /*
-   uint16_t sum_hum = 0;
-    uint16_t sum_vib = 0;
-
-     Convertir datos y guardarlos
-    for (int i = 0; i < ADC_BUFFER_SIZE; i+=2) { // Los datos se almacenan intercalaods
-        sum_vib += adc_buffer[i+1];
-        sum_hum += adc_buffer[i];
-    }
-
-     
-        sum_vib /= (ADC_BUFFER_SIZE / 2);
-        sum_hum /= (ADC_BUFFER_SIZE / 2);
-
-    update_env_state(sum_hum, sum_vib);
-*/
+   // Analizar cada systick isr
     if (analyze_proc_flag == ANALYZED) {
         analyze_proc_flag = CAN_ANALYZE;
     }
     
 
-    // update_vib_frequency();
-    // analyze_and_update_system();
+   
 }
-/**
- * @brief 
- * void timer0_isr()
-{
-  timer_clear_flag(TIM2, TIM_SR_UIF);
-}
- * 
- */
 
 void exti0_isr(void)
 {
@@ -243,7 +214,7 @@ void adc_setup(void) {
     // Set ADC to continuous conversion mode
     ADC_CR2(ADC1) |= ADC_CR2_CONT;
 
-    ADC_SMPR2(ADC1) |= (0x7 << (3 * 1)) | (0x7 << (3 * 2));
+    ADC_SMPR2(ADC1) |= (0x7 << (3 * 1)) | (0x7 << (3 * 2));  // muestreo para los canales (tiempos)
 
     ADC_CR1(ADC1) |= ADC_CR1_SCAN;
 
@@ -268,20 +239,7 @@ void adc_setup(void) {
 }
 
 
-/*
-void control_leds_based_on_hum(uint16_t hum)
-=======
-  rcc_periph_clock_enable(RCC_USART1);
-  usart_set_baudrate(USART1, 9600);
-  usart_set_databits(USART1, 8);                     
-  usart_set_stopbits(USART1, USART_STOPBITS_1);
-  usart_set_parity(USART1, USART_PARITY_NONE);
-  usart_set_mode(USART1, USART_MODE_TX);
-  usart_set_flow_control(USART1, USART_FLOWCONTROL_NONE);
-  usart_enable(USART1);
-  nvic_enable_irq(NVIC_USART1_IRQ);
-}
-*/
+
 void configure_PWM(void)
 {
     rcc_periph_clock_enable(RCC_TIM2);
@@ -347,39 +305,24 @@ void send_uart_data(uint16_t vib, uint16_t hum){
     usart_wait_send_ready(USART1);                     // Funcion que el buffer este vacio
     usart_send_blocking(USART1, usart1_tx_buffer[i]);  // Enviamos el byte en bloque
   }
- // gpio_set(LED_PORT, LED_TX);
 }
 
 
 void dma1_channel1_isr(void)
 {
-  
-
     if (dma_get_interrupt_flag(DMA1, DMA_CHANNEL1, DMA_TCIF)) {
         dma_clear_interrupt_flags(DMA1, DMA_CHANNEL1, DMA_TCIF);
-        // Toggle LED to indicate DMA transfer complete
-        //gpio_toggle(LED_PORT, RED_LED_PIN);
-
-        // Process the ADC buffer
-
- 
         uint16_t sum_vib = 0;
         uint16_t sum_hum = 0;
-
         for (int i = 0; i < ADC_BUFFER_SIZE; i += 2) {
             sum_vib += adc_buffer[i];       // Valores de vibraciones
             sum_hum += adc_buffer[i + 1];
                // Valores de humedad
         }
-            printf("Vibraciones: %d\n", sum_vib);
-
         // Calcular los promedios
         sum_vib /= (ADC_BUFFER_SIZE /2);
         sum_hum /= (ADC_BUFFER_SIZE / 2);
-
-        
-
         // Actualizar el estado del entorno
-        update_env_state(sum_vib, sum_hum);
+        convert_adc_to_env(sum_vib, sum_hum);
     }
 }
