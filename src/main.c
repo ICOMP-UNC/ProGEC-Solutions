@@ -25,7 +25,6 @@ uint16_t env_hum;
 
 uint8_t usart1_tx_buffer[4]; // Yo pense que solo ibamos a transmitir, cambio el rx? 
 
-
 analyze_flag_t analyze_proc_flag = CAN_ANALYZE; 
 
 int buzzer_mode; // estado del buzzer ON/OFF
@@ -60,12 +59,21 @@ int main(void)
     configure_systick();
     configure_UART();
     configure_PWM();
-    buzzer_mode = ON;  // inicializamos el buzzer en OFF 
+    buzzer_mode = OFF;  // inicializamos el buzzer en OFF 
 
     while (TRUE)
     {
       send_uart_data(vib_freq, env_hum);
-      update_buzzer(buzzer_mode);
+      if(buzzer_mode == ON){
+        for (uint16_t duty_cycle = 0; duty_cycle <= 1000; duty_cycle += 100)
+        {
+          timer_set_oc_value(TIM2, TIM_OC4, duty_cycle);
+            for (volatile int i = 0; i < 1000000; i++);    //Sino el cambio de Ton es muy rapido y no se nota
+        }
+      }
+      else{
+        timer_set_oc_value(TIM2, TIM_OC4, 0);
+      }
     }
     return 0;
 }
@@ -80,27 +88,27 @@ void system_clock_setup(void)
 
 void analyze_and_update_system(void) // esto es asincrono a la interrupcion
 {
-   if (env_vib > THRESHOLD_VIB_FREQ_H || env_hum > THRESHOLD_HUM_H) {
-    gpio_set(LED_PORT, YELLOW_LED_PIN); 
-    gpio_set(LED_PORT, GREEN_LED_PIN);
-    gpio_clear(LED_PORT, RED_LED_PIN); 
+if (env_vib > THRESHOLD_VIB_FREQ_H || env_hum > THRESHOLD_HUM_H) {
+    gpio_clear(LED_PORT, YELLOW_LED_PIN); 
+    gpio_clear(LED_PORT, GREEN_LED_PIN);
+    gpio_set(LED_PORT, RED_LED_PIN); 
     //buzzer_mode = OFF;
       if(vib_freq > THRESHOLD_VIB_FREQ_H && env_hum > THRESHOLD_HUM_H){
-       // buzzer_mode = ON; // alarma y led rojo
-
+        //buzzer_mode = ON; // alarma y led rojo
+      }
   } else if(env_vib <= THRESHOLD_VIB_FREQ_L || env_hum <= THRESHOLD_HUM_L) {
-    gpio_set(LED_PORT, RED_LED_PIN); 
-    gpio_set(LED_PORT, YELLOW_LED_PIN); 
-    gpio_clear(LED_PORT, GREEN_LED_PIN); //led verde encendido
+    gpio_clear(LED_PORT, RED_LED_PIN); 
+    gpio_clear(LED_PORT, YELLOW_LED_PIN); 
+    gpio_set(LED_PORT, GREEN_LED_PIN); //led verde encendido
     //buzzer_mode = OFF; 
   }//estado normal
     else{  //cualquier estado amarillo 
-    gpio_set(LED_PORT, RED_LED_PIN); 
-    gpio_set(LED_PORT, GREEN_LED_PIN);
-   // buzzer_mode = OFF; 
-    gpio_clear(LED_PORT, YELLOW_LED_PIN); 
+    gpio_clear(LED_PORT, RED_LED_PIN); 
+    gpio_clear(LED_PORT, GREEN_LED_PIN);
+    //buzzer_mode = OFF; 
+    gpio_set(LED_PORT, YELLOW_LED_PIN); 
   }
-}}
+}
 void update_vib_frequency(void)
 {
   historic_vib[index_hist_vib] = env_vib;
@@ -142,13 +150,13 @@ void sys_tick_handler(void)
  * 
  */
 
-/*
+
 void exti0_isr(void)
 {
   exti_reset_request(EXTI0);
   buzzer_mode = !buzzer_mode;  
 }
-*/
+
 
 /**
  * @brief Configures GPIO pins for the three LEDs.
@@ -163,18 +171,15 @@ void gpio_setup(void)
     gpio_set_mode(LED_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, YELLOW_LED_PIN);
     gpio_set_mode(LED_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL,LED_TX);
     gpio_set_mode(BUZZER_PORT, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, BUZZER_PIN);
-
-    /*
+    
     //config switch manual
-    rcc_periph_clock_enable(RCC_GPIOA);
     gpio_set_mode(BUTTON_PORT, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN, BUTTON_PIN);
     gpio_set(BUTTON_PORT, BUTTON_PIN);
     nvic_enable_irq(NVIC_EXTI0_IRQ);
 
     exti_select_source(EXTI0, BUZZER_PORT);        // Select PA0 as the source for EXTI0 
     exti_set_trigger(EXTI0, EXTI_TRIGGER_FALLING); // Trigger on falling edge 
-    exti_enable_request(EXTI0);                    // Enable EXTI0 interrupt request
-    */  
+    exti_enable_request(EXTI0);                    // Enable EXTI0 interrupt request      
 }
 
 /**
@@ -250,7 +255,7 @@ void configure_PWM(void)
     // Activa el contador del Timer2
     timer_enable_counter(TIM2);
 }
-
+/*
 void update_buzzer(int buzzer_mode)
 {
     if (buzzer_mode == ON)
@@ -266,7 +271,7 @@ void update_buzzer(int buzzer_mode)
         timer_set_oc_value(TIM2, TIM_OC4, 0);              // Duty cycle al 0%
     }
 }
-
+*/
 void configure_UART()
 {
   rcc_periph_clock_enable(RCC_USART1);
