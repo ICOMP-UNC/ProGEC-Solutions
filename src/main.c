@@ -94,7 +94,7 @@ if (env_vib > THRESHOLD_VIB_FREQ_H || env_hum > THRESHOLD_HUM_H) {
     gpio_set(LED_PORT, RED_LED_PIN); 
     buzzer_mode = ON;
       if(vib_freq > THRESHOLD_VIB_FREQ_H && env_hum > THRESHOLD_HUM_H){
-      //  buzzer_mode = ON; // alarma y led rojo
+        buzzer_mode = ON; // alarma y led rojo
       }
   } else if(env_vib <= THRESHOLD_VIB_FREQ_L || env_hum <= THRESHOLD_HUM_L) {
     gpio_clear(LED_PORT, RED_LED_PIN); 
