@@ -35,6 +35,6 @@
 #define ADC_CHANNEL_vib ADC_CHANNEL1
 #define ADC_CHANNEL_hum ADC_CHANNEL2
 
-
+#define ADC_BUFFER_SIZE 16
 
 
