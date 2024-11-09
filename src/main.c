@@ -45,7 +45,7 @@ uint16_t read_adc(uint32_t channel);
 void configure_UART(void);
 void configure_PWM(void);
 void send_uart_data(uint16_t vib_freq, uint16_t env_hum);
-//uint8_t usart1_rx_buffer[128]; // Define the buffer with an appropriate size
+void update_buzzer(int buzzer_mode);
 
 
 /**
@@ -60,21 +60,12 @@ int main(void)
     configure_systick();
     configure_UART();
     configure_PWM();
-    buzzer_mode = OFF;  // inicializamos el buzzer en OFF 
+    buzzer_mode = ON;  // inicializamos el buzzer en OFF 
 
     while (TRUE)
     {
       send_uart_data(vib_freq, env_hum);
-      //control_buzzer_pwm(ON, BUZZER_FREQ);
-      //Testear flag de buzzer
-      
-      if(buzzer_mode == ON){
-        gpio_clear(BUZZER_PORT, BUZZER_PIN);
-      }
-      else{
-        gpio_set(BUZZER_PORT, BUZZER_PIN);
-      }
-      
+      update_buzzer(buzzer_mode);
     }
     return 0;
 }
@@ -166,15 +157,12 @@ void gpio_setup(void)
 {
     /* Enable GPIO clocks */
     rcc_periph_clock_enable(RCC_GPIOA);
+    rcc_periph_clock_enable(RCC_GPIOC);
     gpio_set_mode(LED_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GREEN_LED_PIN);
     gpio_set_mode(LED_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, RED_LED_PIN);
     gpio_set_mode(LED_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, YELLOW_LED_PIN);
     gpio_set_mode(LED_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL,LED_TX);
     gpio_set_mode(BUZZER_PORT, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, BUZZER_PIN);
-
-    //config buzzer
-    rcc_periph_clock_enable(RCC_GPIOC);
-    gpio_set_mode(BUZZER_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, BUZZER_PIN);
 
     /*
     //config switch manual
@@ -242,49 +230,43 @@ void control_leds_based_on_hum(uint16_t hum)
   nvic_enable_irq(NVIC_USART1_IRQ);
 }
 */
-
-void configure_PWM()
+void configure_PWM(void)
 {
-  rcc_periph_clock_enable(RCC_TIM2);
-  timer_reset(TIM2);
-  gpio_set_mode(BUZZER_PORT, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO6);
-  timer_set_mode(TIM2, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
+    rcc_periph_clock_enable(RCC_TIM2);
 
-  /* Timer configuration */
-  timer_set_prescaler(TIM2, 35999);  
-  timer_set_period(TIM2, 999);   
-  timer_enable_oc_output(TIM2, TIM_OC1);
+    // Se configura el modo de funcionamiento del Timer2
+    timer_set_mode(TIM2, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);  
 
-  timer_enable_irq(TIM2, TIM_DIER_UIE);
-  nvic_enable_irq(NVIC_TIM2_IRQ);
-} 
+    timer_set_prescaler(TIM2, 71); // 72MHz / 72 = 1MHz (1us por tick)
+    timer_set_period(TIM2, 1000);  // 1kHz PWM frecuencia
 
-void tim2_isr(void)
+    // Configura el canal 4 (PA3) en modo PWM1
+    timer_set_oc_mode(TIM2, TIM_OC4, TIM_OCM_PWM1);
+    timer_enable_oc_output(TIM2, TIM_OC4);
+
+    // Inicializa el duty cycle al 0%
+    timer_set_oc_value(TIM2, TIM_OC4, 0);
+
+    // Activa el contador del Timer2
+    timer_enable_counter(TIM2);
+}
+
+void update_buzzer(int buzzer_mode)
 {
-    timer_clear_flag(TIM2, TIM_SR_UIF);
-    buzzer_mode = !buzzer_mode;
+    if (buzzer_mode == ON)
+    {
+        for (uint16_t duty_cycle = 0; duty_cycle <= 1000; duty_cycle += 100)
+        {
+            timer_set_oc_value(TIM2, TIM_OC4, duty_cycle);
+            for (volatile int i = 0; i < 1000000; i++);    //Sino el cambio de Ton es muy rapido y no se nota
+        }
+    }
+    else
+    {
+        timer_set_oc_value(TIM2, TIM_OC4, 0);              // Duty cycle al 0%
+    }
 }
 
-/*
-void control_buzzer_pwm(int mode, int frequency) {
-    if (mode == ON) {
-    int period = 72000000 / (720 * frequency);        //Calculo del periodo con valores de prueba 
-    timer_set_period(TIM3, period - 1);
-    timer_set_oc_value(TIM3, TIM_OC1, period / 2);    //Definimos ciclo de trabajo al 50%
-    timer_enable_oc_output(TIM3, TIM_OC1);            // Activa el canal de salida
-  } else {
-      timer_disable_oc_output(TIM3, TIM_OC1);         // Apaga el buzzer
-  }
-}
-
-void tim3_isr(void) {
-    if (timer_get_flag(TIM3, TIM_SR_UIF)) {
-      timer_clear_flag(TIM3, TIM_SR_UIF);
-      buzzer_mode = !buzzer_mode;
-      control_buzzer_pwm(buzzer_mode, 1000);          // Ajusta la frecuencia según sea necesario
-  }
-}
-*/
 void configure_UART()
 {
   rcc_periph_clock_enable(RCC_USART1);
