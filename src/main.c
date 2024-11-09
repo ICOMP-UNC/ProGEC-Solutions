@@ -8,6 +8,8 @@
 #include <libopencm3/stm32/dma.h>
 #include <libopencm3/stm32/adc.h>
 
+#include <stdio.h>
+
 #include "util.h"
 #include "../include/pins.h"
 
@@ -104,25 +106,21 @@ void dma_setup(void) {
 }
 void analyze_and_update_system(void) // esto es asincrono a la interrupcion
 {
- if(env_vib > 20) {
-  gpio_set(LED_PORT, LED_TX);
- } else {
-  gpio_clear(LED_PORT, LED_TX);
- } 
-        if (env_hum > THRESHOLD_HUM_H || env_vib > THRESHOLD_HUM_H) {
+
+        if (env_hum > THRESHOLD_HUM_H || env_vib > THRESHOLD_VIB_FREQ_H) {
         gpio_clear(LED_PORT, YELLOW_LED_PIN);
         gpio_clear(LED_PORT, GREEN_LED_PIN);
         gpio_set(LED_PORT, RED_LED_PIN);
          buzzer_mode = OFF;
-        if (env_hum > THRESHOLD_HUM_H && env_vib > THRESHOLD_HUM_H) {
+        if (env_hum > THRESHOLD_HUM_H && env_vib > THRESHOLD_VIB_FREQ_H) {
              buzzer_mode = ON; // alarma y led rojo
         }
-    } else if (env_hum <= THRESHOLD_HUM_L || env_vib <= THRESHOLD_HUM_L) {
+    } else if (env_hum <= THRESHOLD_HUM_L && env_vib <= THRESHOLD_VIB_FREQ_L) {
         gpio_clear(LED_PORT, RED_LED_PIN);
         gpio_clear(LED_PORT, YELLOW_LED_PIN);
         gpio_set(LED_PORT, GREEN_LED_PIN); // led verde encendido
          buzzer_mode = OFF;
-    } else { // cualquier estado amarillo
+    } else if((env_hum > THRESHOLD_HUM_L && env_hum < THRESHOLD_HUM_M) || (env_vib > THRESHOLD_VIB_FREQ_L && env_vib < THRESHOLD_VIB_FREQ_M)){ // cualquier estado amarillo
         gpio_clear(LED_PORT, RED_LED_PIN);
         gpio_clear(LED_PORT, GREEN_LED_PIN);
          buzzer_mode = OFF;
@@ -245,24 +243,18 @@ void adc_setup(void) {
     // Set ADC to continuous conversion mode
     ADC_CR2(ADC1) |= ADC_CR2_CONT;
 
-    // Set sample time for the ADC channels
-    ADC_SMPR2(ADC1) |= (0x7 << (3 * ADC_CHANNEL_vib)); // 239.5 cycles for vib
-    ADC_SMPR2(ADC1) |= (0x7 << (3 * ADC_CHANNEL_hum)); // 239.5 cycles for hum
+    ADC_SMPR2(ADC1) |= (0x7 << (3 * 1)) | (0x7 << (3 * 2));
+
+    ADC_CR1(ADC1) |= ADC_CR1_SCAN;
 
     // Set the regular sequence to read from the vibration and humidity channels
-    ADC_SQR3(ADC1) = (ADC_CHANNEL_vib << 5)  | ADC_CHANNEL_hum; // Two channels
-
-    ADC_SQR1(ADC1) |= (1 << 20); // Two conversions
-    // Enable DMA for ADC
+    ADC_SQR3(ADC1) = (ADC_CHANNEL_hum << (5 * 0)) | (ADC_CHANNEL_vib << (5 * 1)); // hum en primer lugar y vib en el segundo
+    ADC_SQR1(ADC1) = (1 << 20); // L[3:0] = 1 para 2 conversiones
+       // Enable DMA for ADC
     ADC_CR2(ADC1) |= ADC_CR2_DMA;
 
     // Power on ADC
     ADC_CR2(ADC1) |= ADC_CR2_ADON;
-
-    // Wait for ADC to stabilize
-    for (int i = 0; i < 800000; i++) {
-        __asm__("nop");
-    }
 
     // Calibrate ADC
     ADC_CR2(ADC1) |= ADC_CR2_RSTCAL;
@@ -361,23 +353,31 @@ void send_uart_data(uint16_t vib, uint16_t hum){
 
 void dma1_channel1_isr(void)
 {
+  
+
     if (dma_get_interrupt_flag(DMA1, DMA_CHANNEL1, DMA_TCIF)) {
         dma_clear_interrupt_flags(DMA1, DMA_CHANNEL1, DMA_TCIF);
         // Toggle LED to indicate DMA transfer complete
         //gpio_toggle(LED_PORT, RED_LED_PIN);
 
         // Process the ADC buffer
+
+ 
         uint16_t sum_vib = 0;
         uint16_t sum_hum = 0;
 
         for (int i = 0; i < ADC_BUFFER_SIZE; i += 2) {
             sum_vib += adc_buffer[i];       // Valores de vibraciones
-            sum_hum += adc_buffer[i + 1];   // Valores de humedad
+            sum_hum += adc_buffer[i + 1];
+               // Valores de humedad
         }
+            printf("Vibraciones: %d\n", sum_vib);
 
         // Calcular los promedios
-        sum_vib /= (ADC_BUFFER_SIZE / 2);
+        sum_vib /= (ADC_BUFFER_SIZE /2);
         sum_hum /= (ADC_BUFFER_SIZE / 2);
+
+        
 
         // Actualizar el estado del entorno
         update_env_state(sum_vib, sum_hum);
