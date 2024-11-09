@@ -125,8 +125,6 @@ void update_env_state(uint16_t adc_vib, uint16_t adc_hum)
 {
   env_hum  = (adc_hum * 3.3 / 4096.0) * 100; // Convert ADC value to humidity
   env_vib = (adc_vib * 3.3 / 4096.0) * 100; // Convert ADC value to vibration
-
-
   //Aca deberiamos procesarlos un poco mas y ver que rango nos tira el adc
 } 
 void sys_tick_handler(void)
@@ -144,19 +142,15 @@ void sys_tick_handler(void)
  * void timer0_isr()
 {
   timer_clear_flag(TIM2, TIM_SR_UIF);
-  
-
 }
  * 
  */
-
 
 void exti0_isr(void)
 {
   exti_reset_request(EXTI0);
   buzzer_mode = !buzzer_mode;  
 }
-
 
 /**
  * @brief Configures GPIO pins for the three LEDs.
@@ -219,8 +213,6 @@ uint16_t read_adc(uint32_t channel)
   return adc_read_regular(ADC1);
 }
 
-
-
 /*
 void control_leds_based_on_hum(uint16_t hum)
 =======
@@ -255,23 +247,7 @@ void configure_PWM(void)
     // Activa el contador del Timer2
     timer_enable_counter(TIM2);
 }
-/*
-void update_buzzer(int buzzer_mode)
-{
-    if (buzzer_mode == ON)
-    {
-        for (uint16_t duty_cycle = 0; duty_cycle <= 1000; duty_cycle += 100)
-        {
-            timer_set_oc_value(TIM2, TIM_OC4, duty_cycle);
-            for (volatile int i = 0; i < 1000000; i++);    //Sino el cambio de Ton es muy rapido y no se nota
-        }
-    }
-    else
-    {
-        timer_set_oc_value(TIM2, TIM_OC4, 0);              // Duty cycle al 0%
-    }
-}
-*/
+
 void configure_UART()
 {
   rcc_periph_clock_enable(RCC_USART1);
