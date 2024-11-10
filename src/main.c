@@ -77,8 +77,9 @@ void dma_setup(void) {
  */
 void sys_tick_handler(void) {
     
-    if (analyze_proc_flag == ANALYZED && index_hist_vib == 0) {
+    if (analyze_proc_flag == ANALYZED) {
         update_vib_frequency();
+        if(historic_vib == 0)
         analyze_proc_flag = CAN_ANALYZE;
     }
 }
