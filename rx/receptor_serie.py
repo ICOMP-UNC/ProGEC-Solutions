@@ -99,14 +99,14 @@ def guardar_datos(conexion, tipo, valor):
 
 # Configuración inicial
 if __name__ == "__main__":
-    puerto = "COM3"  # Cambia según tu configuración
+    puerto = "COM3"  # FIJARSE BIEN EN EL PUERTO
     serial_obj = configurar_puerto_serial(puerto)
     
     # Verificar si la conexión serial fue exitosa
     if serial_obj is None:
         print("Error: No se pudo abrir el puerto serial.")
-        exit(1)  # Termina el programa si no se puede abrir el puerto serial
+        exit(1)
     
-    conexion = data_base.configurar_base_datos()  # Inicia la conexión con la base de datos
+    conexion = data_base.configurar_base_datos() 
     print("Esperando datos y almacenando en la base de datos...")
     recibir_datos(serial_obj, conexion)
