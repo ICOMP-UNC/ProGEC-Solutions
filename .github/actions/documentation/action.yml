@@ -1,6 +1,17 @@
 name: "Doc check"
 description: "Code documentation generation with Doxygen"
 
+on:
+  pull_request:
+    branches:
+      - *
+
+inputs:
+  path:
+    required: true
+    description: "Path to validate"
+    default: .
+
 runs:
   using: "composite"
   steps:

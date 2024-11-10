@@ -1,6 +1,18 @@
 name: "Style check"
 description: "Style check using clang-format"
 
+on:
+  pull_request:
+    branches:
+      - *
+
+inputs:
+  path:
+    required: true
+    description: "Path to validate"
+    default: .
+
+
 runs:
   using: "composite"
   steps:
