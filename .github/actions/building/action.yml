@@ -1,6 +1,17 @@
 name: "Build"
 description: "Executes a compilation."
 
+on:
+  pull_request:
+    branches:
+      - *
+
+inputs:
+  path:
+    required: true
+    description: "Build project"
+    default: .
+
 runs:
   using: "composite"
   steps:
