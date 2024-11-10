@@ -22,6 +22,7 @@
 
 uint8_t index_hist_vib = 0; 
 uint16_t vib_freq = 0;  // frecuencia de los sismos
+uint16_t prom_vib = 0;  // promedio de las vibraciones
 uint16_t historic_vib[_MAX_VIB_N];  // vibraciones pasadas de los sismos
 uint16_t env_vib;
 uint16_t env_hum;
@@ -37,20 +38,20 @@ uint16_t adc_buffer[ADC_BUFFER_SIZE];
  */
 void analyze_and_update_system(void) // esto es asincrono a la interrupcion
 {
-        if (env_hum > THRESHOLD_HUM_H || env_vib > THRESHOLD_VIB_FREQ_H) {
+        if (env_hum > THRESHOLD_HUM_H || vib_freq > THRESHOLD_VIB_FREQ_H) {
         gpio_clear(LED_PORT, YELLOW_LED_PIN);
         gpio_clear(LED_PORT, GREEN_LED_PIN);
         gpio_set(LED_PORT, RED_LED_PIN);
          buzzer_mode = OFF;
-        if (env_hum > THRESHOLD_HUM_H && env_vib > THRESHOLD_VIB_FREQ_H) {
+        if (env_hum > THRESHOLD_HUM_H && vib_freq > THRESHOLD_VIB_FREQ_H) {
              buzzer_mode = ON; // alarma y led rojo
         }
-    } else if (env_hum <= THRESHOLD_HUM_L && env_vib <= THRESHOLD_VIB_FREQ_L) {
+    } else if (env_hum <= THRESHOLD_HUM_L && vib_freq <= THRESHOLD_VIB_FREQ_L) {
         gpio_clear(LED_PORT, RED_LED_PIN);
         gpio_clear(LED_PORT, YELLOW_LED_PIN);
         gpio_set(LED_PORT, GREEN_LED_PIN); // led verde encendido
          buzzer_mode = OFF;
-    } else if((env_hum > THRESHOLD_HUM_L && env_hum < THRESHOLD_HUM_M) || (env_vib > THRESHOLD_VIB_FREQ_L && env_vib < THRESHOLD_VIB_FREQ_M)){ // cualquier estado amarillo
+    } else if((env_hum > THRESHOLD_HUM_L && env_hum < THRESHOLD_HUM_M) || (vib_freq > THRESHOLD_VIB_FREQ_L && vib_freq < THRESHOLD_VIB_FREQ_M)){ // cualquier estado amarillo
         gpio_clear(LED_PORT, RED_LED_PIN);
         gpio_clear(LED_PORT, GREEN_LED_PIN);
          buzzer_mode = OFF;
@@ -102,11 +103,14 @@ void update_vib_frequency(void)
   historic_vib[index_hist_vib] = env_vib;
   index_hist_vib = (index_hist_vib + 1) % _MAX_VIB_N; // circular
   if (index_hist_vib == 0) {
-    vib_freq = 0;
+    prom_vib = 0;
     for (int i = 0; i < _MAX_VIB_N; i++) {
-      vib_freq += historic_vib[i];
+      prom_vib += historic_vib[i];
     }
-    vib_freq /= _MAX_VIB_N;   // promedio de las vibraciones
+    prom_vib /= _MAX_VIB_N;   // promedio de las vibraciones
+  }
+  if(prom_vib > THRESHOLD_VIB_FREQ_M){
+    vib_freq ++;
   }
 }
 
