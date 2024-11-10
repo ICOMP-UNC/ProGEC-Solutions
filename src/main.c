@@ -76,8 +76,12 @@ void dma_setup(void) {
  * This is used to avoid inconsistencies in the environment analysis 
  */
 void sys_tick_handler(void) {
-    if (analyze_proc_flag == ANALYZED) 
+    
+    if (analyze_proc_flag == ANALYZED) {
+        update_vib_frequency();
+        if(historic_vib == 0)
         analyze_proc_flag = CAN_ANALYZE;
+    }
 }
 /**
  * @brief External interrupt handler.

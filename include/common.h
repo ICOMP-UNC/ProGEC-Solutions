@@ -38,6 +38,10 @@
  */
 #define THRESHOLD_HUM_L 0
 /**
+ * Threshold vibration frequency
+ */
+#define THRESHOLD_FREQ 100
+/**
  * Buzzer frequency
  */
 #define BUZZER_FREQ 1000
