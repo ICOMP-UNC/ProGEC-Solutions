@@ -1,6 +1,6 @@
 import serial
 import smtplib
-import enviar_alerta
+import send_alert
 import data_base
 
 # Configuración de umbrales
@@ -51,9 +51,9 @@ def recibir_datos(serial_obj, conexion):
 def procesar_datos(serial_obj, conexion):
     """Recibe y procesa los datos enmascarados de 16 bits."""
     try:
-        # Leer los 4 bytes: 2 para vibración (vib) y 2 para humedad (hum)
+        # Lee los 4 bytes: 2 para vibración (vib) y 2 para humedad (hum)
         if serial_obj.in_waiting >= 4:
-            # Leer los dos bytes de vibración
+            # Lee dos bytes de vibración
             byte_vib_high = ord(serial_obj.read(1))  # Parte alta de vib
             byte_vib_low = ord(serial_obj.read(1))   # Parte baja de vib
 
@@ -72,11 +72,11 @@ def procesar_datos(serial_obj, conexion):
             # Validaciones de alerta
             if vib_value > UMBRAL_VIB_ALTA or vib_value < UMBRAL_VIB_BAJA:
                 print(f"⚠️ Alerta: Vibración fuera de rango seguro: {vib_value}")
-                enviar_alerta("vib", vib_value)
+                send_alert("vib", vib_value)
 
             if hum_value > UMBRAL_HUM_ALTA or hum_value < UMBRAL_HUM_BAJA:
                 print(f"⚠️ Alerta: Humedad fuera de rango seguro: {hum_value}")
-                enviar_alerta("hum", hum_value)
+                send_alert("hum", hum_value)
 
             # Guardar los datos en la base de datos independientemente de las alertas
             guardar_datos(conexion, "vib", vib_value)
