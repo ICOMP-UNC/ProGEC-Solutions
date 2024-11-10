@@ -57,6 +57,7 @@ void analyze_and_update_system(void) // esto es asincrono a la interrupcion
          buzzer_mode = OFF;
         gpio_set(LED_PORT, YELLOW_LED_PIN);
     }
+        vib_freq = 0;
 }
 
 /**
@@ -109,7 +110,7 @@ void update_vib_frequency(void)
     }
     prom_vib /= _MAX_VIB_N;   // promedio de las vibraciones
   }
-  if(prom_vib > THRESHOLD_VIB_FREQ_M){
+  if(prom_vib > THRESHOLD_FREQ){ // VER QUE VALOR DE THRESHOLD_FREQ PONER
     vib_freq ++;
   }
 }
