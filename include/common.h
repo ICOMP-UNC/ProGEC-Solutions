@@ -16,11 +16,11 @@
 /**
  * Threshold vibration frequency HIGH
  */
-#define THRESHOLD_VIB_FREQ_H 9
+#define THRESHOLD_VIB_FREQ_H 2
 /**
  * Threshold vibration frequency MIDDLE
  */
-#define THRESHOLD_VIB_FREQ_M 5
+#define THRESHOLD_VIB_FREQ_M 1
 /**
  * Threshold vibration frequency LOW
  */
