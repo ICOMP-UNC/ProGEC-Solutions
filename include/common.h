@@ -36,7 +36,7 @@
 /** 
  * Threshold huimidity LOW
  */
-#define THRESHOLD_HUM_L 0
+#define THRESHOLD_HUM_L 10
 /**
  * Threshold vibration frequency
  */
