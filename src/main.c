@@ -39,6 +39,8 @@ int main(void)
         analyze_and_update_system();
         analyze_proc_flag = ANALYZED;
       }
+
+    
     }
     return 0;
 }
@@ -79,7 +81,7 @@ void sys_tick_handler(void) {
     
     if (analyze_proc_flag == ANALYZED) {
         update_vib_frequency();
-        if(historic_vib == 0)
+        if(index_hist_vib == 0)
         analyze_proc_flag = CAN_ANALYZE;
     }
 }

@@ -7,7 +7,7 @@
 #define ON 1
 #define OFF 0
 
-#define _MAX_VIB_N 50 
+#define _MAX_VIB_N 10
 /**
  * 
  */
@@ -16,11 +16,11 @@
 /**
  * Threshold vibration frequency HIGH
  */
-#define THRESHOLD_VIB_FREQ_H 100
+#define THRESHOLD_VIB_FREQ_H 9
 /**
  * Threshold vibration frequency MIDDLE
  */
-#define THRESHOLD_VIB_FREQ_M 50
+#define THRESHOLD_VIB_FREQ_M 5
 /**
  * Threshold vibration frequency LOW
  */
@@ -40,7 +40,7 @@
 /**
  * Threshold vibration frequency
  */
-#define THRESHOLD_FREQ 100
+#define THRESHOLD_FREQ 50
 /**
  * Buzzer frequency
  */
