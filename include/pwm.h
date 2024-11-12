@@ -10,6 +10,7 @@ Functions prototypes ------------------------------------------------------
 */
 /**
  * @brief Configures the PWM.
+ * @param void
  */
 void configure_PWM(void);
 /**
