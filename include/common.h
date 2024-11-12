@@ -101,6 +101,14 @@ extern int alarm_activation_mode;
  */
 extern analyze_flag_t analyze_proc_flag; 
 
+/**
+ * @brief Promedio de vibraciones.
+ * 
+ * Esta variable almacena el promedio de las vibraciones registradas.
+ */
+uint16_t prom_vib = 0;
+
+
 /*
 Function prototypes ------------------------------------------------------
 */
