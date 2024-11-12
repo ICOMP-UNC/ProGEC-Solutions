@@ -19,13 +19,13 @@ EXEC = my_program
 all: $(EXEC)
 
 # Link object files to create executable
-$(EXEC): $(OBJS)
-    $(CC) $(CFLAGS) -o $@ $^
+$(EXEC):	$(OBJS)
+	$(CC) $(CFLAGS) -o $@ $^
 
 # Compile source files to object files
 %.o: %.c
-    $(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 # Clean up generated files
 clean:
-    rm -f $(OBJS) $(EXEC)
+	rm -f $(OBJS) $(EXEC)
