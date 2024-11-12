@@ -32,33 +32,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install --upgrade platformio
-      - name: Run PlatformIO
-        shell: bash
+      - name: Build with PlatformIO
         run: |
-          environments=${{ inputs.environments }}
-          ignores=${{ inputs.ignores }}
-          upload_port=${{ inputs.upload-port }}
-          test_port=${{ inputs.test-port }}
-          project_dir=${{ inputs.project-dir }}
-          force_remote=${{ inputs.force-remote }}
-          without_building=${{ inputs.without-building }}
-          without_uploading=${{ inputs.without-uploading }}
-          verbose=${{ inputs.verbose }}
-  
-          args=()
-  
-          if [ -n "$environments" ]; then args+=("--environment ${environments//,/ -e }"); fi
-          if [ -n "$ignores" ]; then args+=("--ignore ${ignores//,/ -i }"); fi
-          if [ -n "$upload_port" ]; then args+=("--upload-port $upload_port"); fi
-          if [ -n "$test_port" ]; then args+=("--test-port $test_port"); fi
-          if [ -n "$project_dir" ]; then args+=("--project-dir $project_dir"); fi
-          if [ -n "$force_remote" ]; then args+=("--force-remote"); fi
-          if [ -n "$without_building" ]; then args+=("--without-building"); fi
-          if [ -n "$without_uploading" ]; then args+=("--without-uploading"); fi
-          if [ -n "$verbose" ]; then args+=("--verbose"); fi
-  
-          echo ${args[*]} | xargs pio remote test
-
+            platformio run
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
