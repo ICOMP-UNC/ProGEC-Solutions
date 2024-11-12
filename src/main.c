@@ -26,7 +26,7 @@ int main(void)
     configure_UART();
     configure_PWM();
     buzzer_mode = OFF;
-
+// hi
     while (TRUE)
     {
       /* Active monitor */
