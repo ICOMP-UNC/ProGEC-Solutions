@@ -14,10 +14,10 @@
  */
 #define ADC_BUFFER_SIZE 32
 
-/** 
+/**
  * Variables
  */
-extern uint16_t adc_buffer[ADC_BUFFER_SIZE]; 
+extern uint16_t adc_buffer[ADC_BUFFER_SIZE];
 
 /**
  * Function prototypes ------------------------------------------------------
