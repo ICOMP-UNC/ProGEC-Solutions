@@ -83,6 +83,14 @@ extern uint16_t env_vib;
  */
 extern uint16_t env_hum;
 /**
+ * @brief Average vibration value.
+ * 
+ * Environment vibration value.
+ */
+ 
+extern uint16_t prom_vib;
+
+/**
  * Buffer to store the data to be sent through UART.
  */
 extern uint8_t usart1_tx_buffer[4]; 
@@ -100,13 +108,6 @@ extern int alarm_activation_mode;
  * Variable to manage the analyze process.
  */
 extern analyze_flag_t analyze_proc_flag; 
-
-/**
- * @brief Promedio de vibraciones.
- * 
- * Esta variable almacena el promedio de las vibraciones registradas.
- */
-uint16_t prom_vib;
 
 
 /*
