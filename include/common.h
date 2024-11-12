@@ -106,7 +106,7 @@ extern analyze_flag_t analyze_proc_flag;
  * 
  * Esta variable almacena el promedio de las vibraciones registradas.
  */
-uint16_t prom_vib = 0;
+uint16_t prom_vib;
 
 
 /*
