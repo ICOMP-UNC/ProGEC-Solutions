@@ -22,14 +22,14 @@ runs:
         # find: finds files and lists them
         # 
         # the next section finds all sources and headers files and puts them in a space separated list
-        SOURCE_FILES=$(find $PROJECT_PATH/src -type f \( -name "*.cpp" -or -name "*.hpp" -or -name "*.h" -or -name "*.c" \) | tr "\n" " ")
-        SOURCE_FILES+=$(find $PROJECT_PATH/include -type f \( -name "*.cpp" -or -name "*.hpp" -or -name "*.h" -or -name "*.c" \) | tr "\n" " ")
-        SOURCE_FILES+=$(find $PROJECT_PATH/lib -type f \( -name "*.cpp" -or -name "*.hpp" -or -name "*.h" -or -name "*.c" \) | tr "\n" " ")
+        SOURCE_FILES=$(find $PROJECT_PATH/src -type f \( -name "*.cpp" -or -name "*.hpp" -or -name "*.h" -or -name "*.c" \) ! -path "$PROJECT_PATH/rx/*" | tr "\n" " ")
+        SOURCE_FILES+=$(find $PROJECT_PATH/include -type f \( -name "*.cpp" -or -name "*.hpp" -or -name "*.h" -or -name "*.c" \) ! -path "$PROJECT_PATH/rx/*" | tr "\n" " ")
+        SOURCE_FILES+=$(find $PROJECT_PATH/lib -type f \( -name "*.cpp" -or -name "*.hpp" -or -name "*.h" -or -name "*.c" \) ! -path "$PROJECT_PATH/rx/*" | tr "\n" " ")
 
         ERROR_FILE_FLAG=$PROJECT_PATH/clang-format_errors.txt
 
         # clang-format: check and format code style 
-        #               - -n (--dry-run) option for checking sytle but not actually making changes
+        #               - -n (--dry-run) option for checking style but not actually making changes
         #                 outputs to stderr warnings and errors.
         echo "Running: clang-format -n $SOURCE_FILES"
         CLANG_COMMAND=$(clang-format -n $SOURCE_FILES 2> ${ERROR_FILE_FLAG}) 
