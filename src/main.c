@@ -7,12 +7,10 @@
 #include <libopencm3/stm32/timer.h>
 #include <libopencm3/stm32/usart.h>
 
-
 #include "adc.h"
 #include "common.h"
 #include "pins.h"
 #include "pwm.h"
-
 
 /**
  * @brief Main function.

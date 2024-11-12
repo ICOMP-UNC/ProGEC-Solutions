@@ -18,7 +18,6 @@
 #include "pins.h"
 #include "pwm.h"
 
-
 /* Global Variables */
 uint8_t index_hist_vib = 0;
 uint16_t vib_freq = 0;             // frecuencia de los sismos
