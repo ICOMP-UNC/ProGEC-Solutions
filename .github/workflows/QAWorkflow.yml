@@ -49,7 +49,9 @@ jobs:
           version: 1.0
       - name: Build project
         uses: ./.github/actions/building
-        
+        with:
+          path: .
+
       - name: Run documentation check
         uses: ./.github/actions/documentation
 
