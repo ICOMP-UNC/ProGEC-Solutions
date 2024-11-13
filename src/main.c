@@ -40,6 +40,7 @@ int main(void)
         }
         if (analyze_proc_flag == CAN_ANALYZE)
         {
+            analyze_proc_flag = ANALYZING;
             analyze_and_update_system();
             analyze_proc_flag = ANALYZED;
         }
@@ -82,24 +83,16 @@ void dma_setup(void)
  */
 void sys_tick_handler(void)
 {
-    uint16_t aux = env_vib;
-    if (index_hist_vib == 60)
-    {
-        index_hist_vib = 0;
-        //gpio_set(LED_PORT, LED_TX);
-        return;
-    }
+
     if (analyze_proc_flag == ANALYZED)
     {
-       // update_vib_frequency();
+        update_vib_frequency();
         index_hist_vib++;
-         if (aux >= THRESHOLD_FREQ)
-    {
-        vib_freq += (uint16_t)1;
     }
-        if (index_hist_vib == 1){
-            analyze_proc_flag = CAN_ANALYZE;
-        }
+    if (index_hist_vib >= _MAX_VIB_N)
+    {
+        index_hist_vib = 0;
+        analyze_proc_flag = CAN_ANALYZE;
     }
 }
 /**

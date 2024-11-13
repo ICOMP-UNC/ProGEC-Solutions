@@ -28,7 +28,7 @@
 /**
  * Threshold huimidity HIGH
  */
-#define THRESHOLD_HUM_H 100
+#define THRESHOLD_HUM_L 90
 /**
  * Threshold huimidity MIDDLE
  */
@@ -36,7 +36,7 @@
 /**
  * Threshold huimidity LOW
  */
-#define THRESHOLD_HUM_L 10
+#define THRESHOLD_HUM_H 10
 /**
  * Threshold vibration frequency
  */
