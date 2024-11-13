@@ -13,7 +13,6 @@
  * Adc buffer size for buffer space allocation (adc->mem)
  */
 #define ADC_BUFFER_SIZE 32
-
 /**
  * Variables
  */

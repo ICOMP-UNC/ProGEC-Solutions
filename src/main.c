@@ -158,11 +158,9 @@ void adc_setup(void)
     ADC_CR2(ADC1) |= ADC_CR2_DMA;                                    // activar el dma
     ADC_CR2(ADC1) |= ADC_CR2_ADON;                                   // ADC on
     ADC_CR2(ADC1) |= ADC_CR2_RSTCAL;                                 // calibracion
-    while (ADC_CR2(ADC1) & ADC_CR2_RSTCAL)
-        ;
+    while (ADC_CR2(ADC1) & ADC_CR2_RSTCAL);
     ADC_CR2(ADC1) |= ADC_CR2_CAL;
-    while (ADC_CR2(ADC1) & ADC_CR2_CAL)
-        ;
+    while (ADC_CR2(ADC1) & ADC_CR2_CAL);
     ADC_CR2(ADC1) |= ADC_CR2_ADON; // ADC on para empezar a convertir
     ADC_CR2(ADC1) |= ADC_CR2_SWSTART;
 }

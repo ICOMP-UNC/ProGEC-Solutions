@@ -9,10 +9,10 @@
  *
  */
 
+#include <libopencm3/cm3/systick.h>
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/timer.h>
 #include <libopencm3/stm32/usart.h>
-#include <libopencm3/cm3/systick.h>
 
 #include "adc.h"
 #include "common.h"
@@ -37,7 +37,7 @@ uint16_t adc_buffer[ADC_BUFFER_SIZE];
  */
 void analyze_and_update_system(void) // esto es asincrono a la interrupcion
 {
-  uint16_t aux = vib_freq;
+    uint16_t aux = vib_freq;
     if (env_hum < THRESHOLD_HUM_H || aux > THRESHOLD_VIB_FREQ_H)
     {
         gpio_clear(LED_PORT, YELLOW_LED_PIN);
@@ -64,8 +64,8 @@ void analyze_and_update_system(void) // esto es asincrono a la interrupcion
         buzzer_mode = OFF;
         gpio_set(LED_PORT, YELLOW_LED_PIN);
     }
-    send_uart_data(aux, env_hum); 
-    vib_freq = 0;  
+    send_uart_data(aux, env_hum);
+    vib_freq = 0;
 }
 
 /**
@@ -115,7 +115,7 @@ void control_pwm(uint32_t delay, int initial_buzzer_mode)
  *
  */
 void update_vib_frequency(void)
-{    
+{
     if (env_vib > THRESHOLD_FREQ)
     {
         vib_freq++;
@@ -129,12 +129,8 @@ void send_uart_data(uint16_t vib, uint16_t hum)
 {
     uint16_t uart_data[UART_BUFFER_SIZE];
     uart_data[0] = hum & BYTE_MASK;
-    uart_data[1] = vib & BYTE_MASK;    
+    uart_data[1] = vib & BYTE_MASK;
     usart_send_blocking(USART3, uart_data[0]);
-    for(int i = 0; i < 1000; i++)__asm__("nop");
-    usart_send_blocking(USART3, uart_data[1]); 
+    for (int i = 0; i < 1000; i++) __asm__("nop");
+    usart_send_blocking(USART3, uart_data[1]);
 }
-
-
-
-
