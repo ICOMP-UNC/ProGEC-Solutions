@@ -39,18 +39,19 @@ uint16_t adc_buffer[ADC_BUFFER_SIZE];
  */
 void analyze_and_update_system(void) // esto es asincrono a la interrupcion
 {
-    if (env_hum < THRESHOLD_HUM_H || vib_freq > THRESHOLD_VIB_FREQ_H)
+  uint16_t aux = vib_freq;
+    if (env_hum < THRESHOLD_HUM_H || aux > THRESHOLD_VIB_FREQ_H)
     {
         gpio_clear(LED_PORT, YELLOW_LED_PIN);
         gpio_clear(LED_PORT, GREEN_LED_PIN);
         gpio_set(LED_PORT, RED_LED_PIN);
         buzzer_mode = OFF;
-        if (env_hum < THRESHOLD_HUM_H && vib_freq > THRESHOLD_VIB_FREQ_H)
+        if (env_hum < THRESHOLD_HUM_H && aux > THRESHOLD_VIB_FREQ_H)
         {
             buzzer_mode = ON; // alarma y led rojo
         }
     }
-    else if (env_hum >= THRESHOLD_HUM_L && vib_freq <= THRESHOLD_VIB_FREQ_L)
+    else if (env_hum >= THRESHOLD_HUM_L && aux <= THRESHOLD_VIB_FREQ_L)
     {
         gpio_clear(LED_PORT, RED_LED_PIN);
         gpio_clear(LED_PORT, YELLOW_LED_PIN);
@@ -58,15 +59,15 @@ void analyze_and_update_system(void) // esto es asincrono a la interrupcion
         buzzer_mode = OFF;
     }
     else if ((env_hum < THRESHOLD_HUM_L && env_hum > THRESHOLD_HUM_M) ||
-             (vib_freq > THRESHOLD_VIB_FREQ_L && vib_freq < THRESHOLD_VIB_FREQ_M))
+             (vib_freq > THRESHOLD_VIB_FREQ_L && aux < THRESHOLD_VIB_FREQ_M))
     { // cualquier estado amarillo
         gpio_clear(LED_PORT, RED_LED_PIN);
         gpio_clear(LED_PORT, GREEN_LED_PIN);
         buzzer_mode = OFF;
         gpio_set(LED_PORT, YELLOW_LED_PIN);
     }
-    send_uart_data(vib_freq, env_hum); 
-    vib_freq = (uint16_t)0;  
+    send_uart_data(aux, env_hum); 
+    vib_freq = 0;  
 }
 
 /**
@@ -117,7 +118,6 @@ void control_pwm(uint32_t delay, int initial_buzzer_mode)
  */
 void update_vib_frequency(void)
 {    
-    index_hist_vib++;
     if (env_vib > THRESHOLD_FREQ)
     {
         vib_freq++;
@@ -128,36 +128,16 @@ void update_vib_frequency(void)
  *
  */
 void send_uart_data(uint16_t vib, uint16_t hum){
-    uint16_t uart_data[2];
-    //uart_data[0] = hum;
-    uart_data[0] = vib;
+    uint16_t uart_data[UART_BUFFER_SIZE];
+    uart_data[0] = hum & 0xFF;
+    uart_data[1] = vib & 0xFF;
+     
+      usart_send_blocking(USART3, uart_data[0]);
+      for(int i = 0; i < 1000; i++)__asm__("nop");
+      usart_send_blocking(USART3, uart_data[1]);
     
-    /*
-    for (int i = 0; i < 2; i++) {
-        usart_send(USART3, uart_data[i]);
-    }
-    */
-    usart_send_blocking(USART3, uart_data[0]);   
-    //uart_data[0] = 0;
-
-    for (int i = 0; i < 800; i++){
-        __asm__("nop");
-    }   
 }
 
 
 
-    //const uint16_t TEST_VAL = 60;
 
-/*
-    if (vib > TEST_VAL){
-        uart_data[0] = 0;
-        return;
-    } else {
-        uart_data[0] = vib;
-        usart_send_blocking(USART3, uart_data[0]);  
-    }
-    uart_data[0] = 0;
-
-}
-*/
