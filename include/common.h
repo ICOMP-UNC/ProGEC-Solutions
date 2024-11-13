@@ -99,14 +99,6 @@ extern uint16_t prom_vib;
  */
 extern uint8_t usart3_tx_buffer[UART_BUFFER_SIZE];
 /**
- * Buffer to store the data to be sent through UART.
- */
-extern uint16_t uart_tail;
-/**
- * Buffer to store the data to be sent through UART.
- */
-extern uint16_t uart_head;
-/**
  * Variable to modify the buzzer mode. If it is ON, the buzzer will sound.
  * This is managed by environment.
  */

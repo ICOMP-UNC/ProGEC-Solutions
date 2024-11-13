@@ -21,8 +21,6 @@
 
 /* Global Variables */
 int index_hist_vib = 0;
-uint16_t uart_tail = 0;
-uint16_t uart_head = 0;
 uint16_t vib_freq = 0;             // frecuencia de los sismos
 uint16_t prom_vib = 0;             // promedio de las vibraciones
 uint16_t historic_vib[_MAX_VIB_N]; // vibraciones pasadas de los sismos
@@ -127,15 +125,14 @@ void update_vib_frequency(void)
  * @brief Sends the environment info through UART.
  *
  */
-void send_uart_data(uint16_t vib, uint16_t hum){
+void send_uart_data(uint16_t vib, uint16_t hum)
+{
     uint16_t uart_data[UART_BUFFER_SIZE];
-    uart_data[0] = hum & 0xFF;
-    uart_data[1] = vib & 0xFF;
-     
-      usart_send_blocking(USART3, uart_data[0]);
-      for(int i = 0; i < 1000; i++)__asm__("nop");
-      usart_send_blocking(USART3, uart_data[1]);
-    
+    uart_data[0] = hum & BYTE_MASK;
+    uart_data[1] = vib & BYTE_MASK;    
+    usart_send_blocking(USART3, uart_data[0]);
+    for(int i = 0; i < 1000; i++)__asm__("nop");
+    usart_send_blocking(USART3, uart_data[1]); 
 }
 
 
