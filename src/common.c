@@ -12,6 +12,7 @@
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/timer.h>
 #include <libopencm3/stm32/usart.h>
+#include <libopencm3/cm3/systick.h>
 
 #include "adc.h"
 #include "common.h"
@@ -19,17 +20,18 @@
 #include "pwm.h"
 
 /* Global Variables */
-uint8_t index_hist_vib = 0;
+int index_hist_vib = 0;
+uint16_t uart_tail = 0;
+uint16_t uart_head = 0;
 uint16_t vib_freq = 0;             // frecuencia de los sismos
 uint16_t prom_vib = 0;             // promedio de las vibraciones
 uint16_t historic_vib[_MAX_VIB_N]; // vibraciones pasadas de los sismos
 uint16_t env_vib;
 uint16_t env_hum;
-uint8_t usart1_tx_buffer[4];
 int buzzer_mode = OFF;           // estado del buzzer ON/OFF
 int alarm_activation_mode = OFF; // modo de activacion de la alarma
 analyze_flag_t analyze_proc_flag = CAN_ANALYZE;
-
+uint8_t usart3_tx_buffer[UART_BUFFER_SIZE];
 uint16_t adc_buffer[ADC_BUFFER_SIZE];
 /**
  * @brief analyzes the environment info and updates the LEDs and alarm system.
@@ -63,7 +65,8 @@ void analyze_and_update_system(void) // esto es asincrono a la interrupcion
         buzzer_mode = OFF;
         gpio_set(LED_PORT, YELLOW_LED_PIN);
     }
-    vib_freq = 0;
+    send_uart_data(vib_freq, env_hum); 
+    vib_freq = (uint16_t)0;  
 }
 
 /**
@@ -113,38 +116,48 @@ void control_pwm(uint32_t delay, int initial_buzzer_mode)
  *
  */
 void update_vib_frequency(void)
-{
-    historic_vib[index_hist_vib] = env_vib;
-    index_hist_vib = (index_hist_vib + 1) % _MAX_VIB_N; // circular
-    if (index_hist_vib == 0)
+{    
+    index_hist_vib++;
+    if (env_vib > THRESHOLD_FREQ)
     {
-        prom_vib = 0;
-        for (int i = 0; i < _MAX_VIB_N; i++)
-        {
-            prom_vib += historic_vib[i];
-        }
-        prom_vib /= _MAX_VIB_N; // promedio de las vibraciones
-    }
-    if (prom_vib > THRESHOLD_FREQ)
-    { // VER QUE VALOR DE THRESHOLD_FREQ PONER
         vib_freq++;
     }
 }
-
 /**
  * @brief Sends the environment info through UART.
  *
  */
-void send_uart_data(uint16_t vib, uint16_t hum)
-{
-    usart1_tx_buffer[0] = (vib >> 8) & BYTE_MASK; // Parte alta de vib_freq
-    usart1_tx_buffer[1] = vib & BYTE_MASK;        // Parte baja de vib_freq
-    usart1_tx_buffer[2] = (hum >> 8) & BYTE_MASK; // Parte alta de env_hum
-    usart1_tx_buffer[3] = hum & BYTE_MASK;        // Parte baja de env_hum
-
-    for (int i = 0; i < 4; i++)
-    {                                                     // Enviamos los 4 bytes uno por uno
-        usart_wait_send_ready(USART1);                    // Funcion que el buffer este vacio
-        usart_send_blocking(USART1, usart1_tx_buffer[i]); // Enviamos el byte en bloque
+void send_uart_data(uint16_t vib, uint16_t hum){
+    uint16_t uart_data[2];
+    //uart_data[0] = hum;
+    uart_data[0] = vib;
+    
+    /*
+    for (int i = 0; i < 2; i++) {
+        usart_send(USART3, uart_data[i]);
     }
+    */
+    usart_send_blocking(USART3, uart_data[0]);   
+    //uart_data[0] = 0;
+
+    for (int i = 0; i < 800; i++){
+        __asm__("nop");
+    }   
 }
+
+
+
+    //const uint16_t TEST_VAL = 60;
+
+/*
+    if (vib > TEST_VAL){
+        uart_data[0] = 0;
+        return;
+    } else {
+        uart_data[0] = vib;
+        usart_send_blocking(USART3, uart_data[0]);  
+    }
+    uart_data[0] = 0;
+
+}
+*/

@@ -33,6 +33,11 @@
 #define ADC_PORT GPIOA
 
 /**
+ * @brief GPIO port for the UART.
+ */
+#define UART_PORT GPIOB
+
+/**
  * @brief GPIO pin for the yellow LED.
  */
 #define YELLOW_LED_PIN GPIO12
@@ -64,7 +69,14 @@
  * @brief GPIO pin for the humidity sensor ADC.
  */
 #define ADC_PIN_hum GPIO2
-
+/**
+ * @brief GPIO pin for the UART TX.
+ */
+#define UART_TX_PIN GPIO10
+/**
+ * @brief GPIO pin for the UART RX.
+ */
+#define UART_RX_PIN GPIO11
 /**
  * @brief Configures the GPIO ports and pins.
  */

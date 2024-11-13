@@ -82,12 +82,24 @@ void dma_setup(void)
  */
 void sys_tick_handler(void)
 {
-
+    uint16_t aux = env_vib;
+    if (index_hist_vib == 60)
+    {
+        index_hist_vib = 0;
+        //gpio_set(LED_PORT, LED_TX);
+        return;
+    }
     if (analyze_proc_flag == ANALYZED)
     {
-        update_vib_frequency();
-        if (index_hist_vib == 0)
+       // update_vib_frequency();
+        index_hist_vib++;
+         if (aux >= THRESHOLD_FREQ)
+    {
+        vib_freq += (uint16_t)1;
+    }
+        if (index_hist_vib == 1){
             analyze_proc_flag = CAN_ANALYZE;
+        }
     }
 }
 /**
@@ -105,12 +117,15 @@ void exti0_isr(void)
 void gpio_setup(void)
 {
     rcc_periph_clock_enable(RCC_GPIOA);
+    rcc_periph_clock_enable(RCC_GPIOB);
     rcc_periph_clock_enable(RCC_GPIOC);
     gpio_set_mode(LED_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GREEN_LED_PIN);
     gpio_set_mode(LED_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, RED_LED_PIN);
     gpio_set_mode(LED_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, YELLOW_LED_PIN);
     gpio_set_mode(LED_PORT, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, LED_TX);
     gpio_set_mode(BUZZER_PORT, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, BUZZER_PIN);
+    gpio_set_mode(UART_PORT, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_USART3_TX);
+    gpio_set_mode(UART_PORT, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO_USART3_RX);
     gpio_set_mode(BUTTON_PORT, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN, BUTTON_PIN);
     gpio_set(BUTTON_PORT, BUTTON_PIN);
     nvic_enable_irq(NVIC_EXTI0_IRQ);
@@ -178,15 +193,15 @@ void configure_PWM(void)
  */
 void configure_UART()
 {
-    rcc_periph_clock_enable(RCC_USART1);
-    usart_set_baudrate(USART1, 9600);
-    usart_set_databits(USART1, 8);
-    usart_set_stopbits(USART1, USART_STOPBITS_1);
-    usart_set_parity(USART1, USART_PARITY_NONE);
-    usart_set_mode(USART1, USART_MODE_TX);
-    usart_set_flow_control(USART1, USART_FLOWCONTROL_NONE);
-    usart_enable(USART1);
-    nvic_enable_irq(NVIC_USART1_IRQ);
+    rcc_periph_clock_enable(RCC_USART3);
+    usart_set_baudrate(USART3, 9600);
+    usart_set_databits(USART3, 8);
+    usart_set_stopbits(USART3, USART_STOPBITS_1);
+    usart_set_mode(USART3, USART_MODE_TX);
+    usart_set_parity(USART3, USART_PARITY_NONE);
+    usart_set_flow_control(USART3, USART_FLOWCONTROL_NONE);
+    usart_enable(USART3);
+  //  nvic_enable_irq(NVIC_USART3_IRQ);
 }
 /**
  * @brief ISR DMA.
@@ -209,3 +224,32 @@ void dma1_channel1_isr(void)
         convert_adc_to_env(sum_vib, sum_hum);
     }
 }
+
+/**
+ * @brief ISR UART.
+ * Sends the environment data through UART.
+ */
+
+void usart3_isr(void) {
+    if (usart_get_flag(USART3, USART_SR_TXE)) {
+        if (uart_head != uart_tail) {  
+            usart_send(USART3, usart3_tx_buffer[uart_tail]);  
+            uart_tail = (uart_tail + 1) % UART_BUFFER_SIZE;   
+        } else {
+            usart_disable_tx_interrupt(USART3);
+        }
+        USART_SR(USART3) &= ~USART_SR_TXE;  
+    }
+}
+
+/*
+
+Hola prisci, soy el emi de ayer. 
+El error es UART, totalmente. Cambie los threshholds y ahora se prende el
+amarillo con las vibraciones y anda joya..
+Tambien note que cuando se manda mal el uart, es un numero
+computacional, tipo 256 + cantidad de vibraciones
+o 512 + cantidad de vibracione, y asi
+Habria q ver por que pasa eso, quias algo del send uart data
+
+*/

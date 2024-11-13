@@ -7,7 +7,7 @@
 #define ON  1
 #define OFF 0
 
-#define _MAX_VIB_N 10
+#define _MAX_VIB_N 200
 /**
  *
  */
@@ -16,11 +16,11 @@
 /**
  * Threshold vibration frequency HIGH
  */
-#define THRESHOLD_VIB_FREQ_H 2
+#define THRESHOLD_VIB_FREQ_H 15
 /**
  * Threshold vibration frequency MIDDLE
  */
-#define THRESHOLD_VIB_FREQ_M 1
+#define THRESHOLD_VIB_FREQ_M 10
 /**
  * Threshold vibration frequency LOW
  */
@@ -40,7 +40,7 @@
 /**
  * Threshold vibration frequency
  */
-#define THRESHOLD_FREQ 50
+#define THRESHOLD_FREQ 60
 /**
  * Buzzer frequency
  */
@@ -48,9 +48,13 @@
 /**
  * System clock time int.
  */
-#define SYSTICK_INTERVAL_MS 100
+#define SYSTICK_INTERVAL_MS 10
 /**
  * Cases for the analyze process.
+ */
+#define UART_BUFFER_SIZE 2
+/**
+ * Buffer size for the UART communication.
  */
 typedef enum
 {
@@ -66,7 +70,7 @@ Variables ----------------------------------------------------------------
 /**
  * Used to index the vibration vector.
  */
-extern uint8_t index_hist_vib;
+extern int index_hist_vib;
 /**
  * Global variable for the vibration frequency.
  */
@@ -90,11 +94,18 @@ extern uint16_t env_hum;
  */
 
 extern uint16_t prom_vib;
-
 /**
  * Buffer to store the data to be sent through UART.
  */
-extern uint8_t usart1_tx_buffer[4];
+extern uint8_t usart3_tx_buffer[UART_BUFFER_SIZE];
+/**
+ * Buffer to store the data to be sent through UART.
+ */
+extern uint16_t uart_tail;
+/**
+ * Buffer to store the data to be sent through UART.
+ */
+extern uint16_t uart_head;
 /**
  * Variable to modify the buzzer mode. If it is ON, the buzzer will sound.
  * This is managed by environment.
