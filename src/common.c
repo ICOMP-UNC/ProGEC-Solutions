@@ -23,8 +23,6 @@
 /* Global Variables */
 int index_hist_vib = 0;
 uint16_t vib_freq = 0;             // frecuencia de los sismos
-uint16_t prom_vib = 0;             // promedio de las vibraciones
-uint16_t historic_vib[_MAX_VIB_N]; // vibraciones pasadas de los sismos
 uint16_t env_vib;
 uint16_t env_hum;
 int buzzer_mode = OFF;           // estado del buzzer ON/OFF
