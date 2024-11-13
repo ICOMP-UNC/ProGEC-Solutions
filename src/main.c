@@ -84,7 +84,6 @@ void dma_setup(void)
  */
 void sys_tick_handler(void)
 {
-
     if (analyze_proc_flag == ANALYZED)
     {
         update_vib_frequency();
