@@ -194,7 +194,6 @@ void configure_UART()
     usart_set_parity(USART3, USART_PARITY_NONE);
     usart_set_flow_control(USART3, USART_FLOWCONTROL_NONE);
     usart_enable(USART3);
-  //  nvic_enable_irq(NVIC_USART3_IRQ);
 }
 /**
  * @brief ISR DMA.
@@ -217,32 +216,3 @@ void dma1_channel1_isr(void)
         convert_adc_to_env(sum_vib, sum_hum);
     }
 }
-
-/**
- * @brief ISR UART.
- * Sends the environment data through UART.
- */
-
-void usart3_isr(void) {
-    if (usart_get_flag(USART3, USART_SR_TXE)) {
-        if (uart_head != uart_tail) {  
-            usart_send(USART3, usart3_tx_buffer[uart_tail]);  
-            uart_tail = (uart_tail + 1) % UART_BUFFER_SIZE;   
-        } else {
-            usart_disable_tx_interrupt(USART3);
-        }
-        USART_SR(USART3) &= ~USART_SR_TXE;  
-    }
-}
-
-/*
-
-Hola prisci, soy el emi de ayer. 
-El error es UART, totalmente. Cambie los threshholds y ahora se prende el
-amarillo con las vibraciones y anda joya..
-Tambien note que cuando se manda mal el uart, es un numero
-computacional, tipo 256 + cantidad de vibraciones
-o 512 + cantidad de vibracione, y asi
-Habria q ver por que pasa eso, quias algo del send uart data
-
-*/
