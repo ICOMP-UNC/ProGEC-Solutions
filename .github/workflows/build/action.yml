@@ -1,6 +1,12 @@
 name: "Build"
 description: "Executes a compilation."
 
+on:
+    workflow_dispatch:
+    pull_request:
+      # Pull request events
+      types: [synchronize, opened, reopened, ready_for_review]
+
 runs:
   using: "composite"
   steps:

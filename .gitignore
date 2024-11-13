@@ -58,3 +58,7 @@ dkms.conf
 #platformIO
 platformio.ini
 
+#carpeta_libreia
+libreria_para_enviar_mail/
+
+
