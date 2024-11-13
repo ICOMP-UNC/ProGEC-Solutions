@@ -21,22 +21,18 @@
  * @brief GPIO port for the buzzer.
  */
 #define BUZZER_PORT GPIOA
-
 /**
  * @brief GPIO port for the button.
  */
 #define BUTTON_PORT GPIOA
-
 /**
  * @brief GPIO port for the ADC.
  */
 #define ADC_PORT GPIOA
-
 /**
  * @brief GPIO port for the UART.
  */
 #define UART_PORT GPIOB
-
 /**
  * @brief GPIO pin for the yellow LED.
  */

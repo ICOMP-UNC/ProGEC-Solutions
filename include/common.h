@@ -1,18 +1,31 @@
 #include <libopencm3/stm32/rcc.h>
+
 #pragma once
 
-#define TRUE  1
-#define FALSE 0
-
-#define ON  1
-#define OFF 0
-
-#define _MAX_VIB_N 200
 /**
  *
  */
+#define TRUE 1
+/**
+ *
+ */
+#define FALSE 0
+/**
+ *
+ */
+#define ON 1
+/**
+ *
+ */
+#define OFF 0
+/**
+ * Max numeber of samples (vibrations).
+ */
+#define _MAX_VIB_N 200
+/**
+ * Byte mask for the UART communication.
+ */
 #define BYTE_MASK 0xFF
-
 /**
  * Threshold vibration frequency HIGH
  */
@@ -50,9 +63,8 @@
  */
 #define SYSTICK_INTERVAL_MS 10
 /**
- * Cases for the analyze process.
+ * @brief States for the analyze process.
  */
-
 typedef enum
 {
     ANALYZING,
@@ -120,7 +132,6 @@ void convert_adc_to_env(uint16_t, uint16_t);
  * @brief Updates the vibration frequency.
  */
 void update_vib_frequency(void);
-
 /**
  * @brief Sets the system clock to 72 MHz.
  */
