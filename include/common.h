@@ -52,10 +52,7 @@
 /**
  * Cases for the analyze process.
  */
-#define UART_BUFFER_SIZE 2
-/**
- * Buffer size for the UART communication.
- */
+
 typedef enum
 {
     ANALYZING,
@@ -78,26 +75,11 @@ extern uint16_t vib_freq;
 /**
  * Vector to store the past vibrations.
  */
-extern uint16_t historic_vib[_MAX_VIB_N];
-/**
- * Environment vibration value.
- */
 extern uint16_t env_vib;
 /**
  * Environment humidity value.
  */
 extern uint16_t env_hum;
-/**
- * @brief Average vibration value.
- *
- * Environment vibration value.
- */
-
-extern uint16_t prom_vib;
-/**
- * Buffer to store the data to be sent through UART.
- */
-extern uint8_t usart3_tx_buffer[UART_BUFFER_SIZE];
 /**
  * Variable to modify the buzzer mode. If it is ON, the buzzer will sound.
  * This is managed by environment.
@@ -138,16 +120,7 @@ void convert_adc_to_env(uint16_t, uint16_t);
  * @brief Updates the vibration frequency.
  */
 void update_vib_frequency(void);
-/**
- * @brief Configure UART communication.
- */
-void configure_UART(void);
-/**
- * @brief Sends the data through UART.
- * @param vib_freq
- * @param env_hum
- */
-void send_uart_data(uint16_t vib_freq, uint16_t env_hum);
+
 /**
  * @brief Sets the system clock to 72 MHz.
  */

@@ -11,6 +11,7 @@
 #include "common.h"
 #include "pins.h"
 #include "pwm.h"
+#include "uart.h"
 
 /**
  * @brief Main function.

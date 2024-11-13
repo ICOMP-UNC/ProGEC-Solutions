@@ -18,6 +18,7 @@
 #include "common.h"
 #include "pins.h"
 #include "pwm.h"
+#include "uart.h"
 
 /* Global Variables */
 int index_hist_vib = 0;
@@ -29,7 +30,6 @@ uint16_t env_hum;
 int buzzer_mode = OFF;           // estado del buzzer ON/OFF
 int alarm_activation_mode = OFF; // modo de activacion de la alarma
 analyze_flag_t analyze_proc_flag = CAN_ANALYZE;
-uint8_t usart3_tx_buffer[UART_BUFFER_SIZE];
 uint16_t adc_buffer[ADC_BUFFER_SIZE];
 /**
  * @brief analyzes the environment info and updates the LEDs and alarm system.
