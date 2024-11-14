@@ -11,10 +11,8 @@ import data_base
 sys.stdout.reconfigure(encoding='utf-8')
 
 # Configuración de umbrales
-UMBRAL_VIB_ALTA = 30.0
-UMBRAL_VIB_BAJA = 10.0
-UMBRAL_HUM_ALTA = 100.0
-UMBRAL_HUM_BAJA = 20.0
+UMBRAL_VIB_ALTA = 30
+UMBRAL_HUM_BAJA = 20
 
 # Parámetros de configuración del puerto
 baudrate = 9600
@@ -66,7 +64,7 @@ def recibir_datos(serial_obj, conexion):
         conexion.close()
 
 def procesar_datos(data_bytes, conexion):
-    """Procesa los datos recibidos en un arreglo de 4 bytes."""
+    """Procesa los datos recibidos en un arreglo de 2 bytes."""
     try:
         hum_value = data_bytes[0]
         vib_value = data_bytes[1]
@@ -79,7 +77,7 @@ def procesar_datos(data_bytes, conexion):
 
         if hum_value < UMBRAL_HUM_BAJA :
             print(f"⚠️ Alerta: Humedad fuera de rango seguro: {hum_value}")
-            send_alert("hum", hum_value)
+            #send_alert("hum", hum_value)
 
 #        guardar_datos(conexion, "vib", vib_value)
 #        guardar_datos(conexion, "hum", hum_value)
