@@ -41,7 +41,7 @@
 /**
  * Threshold huimidity HIGH
  */
-#define THRESHOLD_HUM_L 90
+#define THRESHOLD_HUM_L 100
 /**
  * Threshold huimidity MIDDLE
  */
