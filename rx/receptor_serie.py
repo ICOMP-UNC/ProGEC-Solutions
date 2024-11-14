@@ -12,7 +12,7 @@ sys.stdout.reconfigure(encoding='utf-8')
 
 # Configuración de umbrales
 UMBRAL_VIB_ALTA = 30
-UMBRAL_HUM_BAJA = 20
+UMBRAL_HUM_BAJA = 10
 
 # Parámetros de configuración del puerto
 baudrate = 9600
@@ -73,7 +73,7 @@ def procesar_datos(data_bytes, conexion):
 
         if vib_value > UMBRAL_VIB_ALTA :
             print(f"⚠️ Alerta: Vibracion fuera de rango seguro: {vib_value}")
-            send_alert("vib", vib_value)
+           # send_alert("vib", vib_value)
 
         if hum_value < UMBRAL_HUM_BAJA :
             print(f"⚠️ Alerta: Humedad fuera de rango seguro: {hum_value}")
