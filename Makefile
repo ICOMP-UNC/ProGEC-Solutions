@@ -1,15 +1,11 @@
-.PHONY: all build upload monitor clean
-
-all: build
+all: 
+	build
 
 build:
-    pio run
+	platformio run
 
 upload:
-    pio run --target upload
-
-monitor:
-    pio device monitor
+	platformio run --target upload
 
 clean:
-    pio run --target clean
+	platformio run --target clean
