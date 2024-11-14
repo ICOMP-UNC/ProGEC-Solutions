@@ -19,28 +19,29 @@ Debes tener en tu computadora:
 # Clonar el Repositorio de ProGEC-Solutions
 
 Desde Github, clone el repositorio:
-´´´
+
+```
 git clone https://github.com/ICOMP-UNC/ProGEC-Solutions.git
 cd ProGEC-Solutions
-´´´
+```
 
 # Configurar el Proyecto en VSCode
 
 1. Abra el pryecto en Visual Studio Code.
 2. Ejecute las siguientes instrucciones:
 
-´´´
+```
 make clean
 make build
 make upload
-´´´
+```
 
 # Para ejecutar la monitorización
 
 Ejecute 
 
-´´´
+```
 python rx/receptor_serie.py
-´´´
+```
 
 
