@@ -55,8 +55,8 @@ def recibir_datos(serial_obj, conexion):
             else:
                 time.sleep(0.1)
     except KeyboardInterrupt:
-        print("Conexion cerrada por el usuario.")
-    except Exception as e:
+        print("Conexión cerrada por el usuario.")
+    except Exception as e:  
         print(f"Error inesperado: {e}")
     finally:
         if serial_obj.is_open:

@@ -37,7 +37,12 @@ make upload
 ```
 
 # Para ejecutar la monitorización
+1. ejecutar los siguientes comandos par instalar las librerias necesarias
+```
+pip install pyserial 
+pip install sendgrid
 
+```
 Ejecute 
 
 ```
