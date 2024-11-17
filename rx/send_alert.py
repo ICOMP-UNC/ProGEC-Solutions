@@ -5,7 +5,7 @@ from sendgrid.helpers.mail import Mail
 # Configuración del correo
 SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY")  # Guardar la API key en variables de entorno
 EMAIL_SENDER = "gabrielarrietacarrasco@gmail.com"  # Dirección desde donde se envía
-EMAIL_RECEIVER = "wobeji8423@inikale.com"  # Correo temporal como receptor
+EMAIL_RECEIVER = "primallea29@gmail.com"  # Correo temporal como receptor
 
 def enviar_alerta(tipo, valor):
     """Envía una alerta usando SendGrid cuando un valor está fuera de rango."""
