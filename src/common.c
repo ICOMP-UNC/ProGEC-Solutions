@@ -35,19 +35,18 @@ uint16_t adc_buffer[ADC_BUFFER_SIZE];
  */
 void analyze_and_update_system(void) // esto es asincrono a la interrupcion
 {
-    uint16_t aux = vib_freq;
-    if (env_hum < THRESHOLD_HUM_H || aux > THRESHOLD_VIB_FREQ_H)
+    if (env_hum < THRESHOLD_HUM_H || vib_freq > THRESHOLD_VIB_FREQ_H)
     {
         gpio_clear(LED_PORT, YELLOW_LED_PIN);
         gpio_clear(LED_PORT, GREEN_LED_PIN);
         gpio_set(LED_PORT, RED_LED_PIN);
         buzzer_mode = OFF;
-        if (env_hum < THRESHOLD_HUM_H && aux > THRESHOLD_VIB_FREQ_H)
+        if (env_hum < THRESHOLD_HUM_H && vib_freq > THRESHOLD_VIB_FREQ_H)
         {
             buzzer_mode = ON; // alarma y led rojo
         }
     }
-    else if (env_hum >= THRESHOLD_HUM_L && aux <= THRESHOLD_VIB_FREQ_L)
+    else if (env_hum >= THRESHOLD_HUM_L && vib_freq <= THRESHOLD_VIB_FREQ_L)
     {
         gpio_clear(LED_PORT, RED_LED_PIN);
         gpio_clear(LED_PORT, YELLOW_LED_PIN);
@@ -55,7 +54,7 @@ void analyze_and_update_system(void) // esto es asincrono a la interrupcion
         buzzer_mode = OFF;
     }
     else if ((env_hum < THRESHOLD_HUM_L && env_hum > THRESHOLD_HUM_M) ||
-             (vib_freq > THRESHOLD_VIB_FREQ_L && aux < THRESHOLD_VIB_FREQ_M))
+             (vib_freq > THRESHOLD_VIB_FREQ_L && vib_freq < THRESHOLD_VIB_FREQ_M))
     { // cualquier estado amarillo
         gpio_clear(LED_PORT, RED_LED_PIN);
         gpio_clear(LED_PORT, GREEN_LED_PIN);
