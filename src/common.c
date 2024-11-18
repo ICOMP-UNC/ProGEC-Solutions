@@ -61,7 +61,7 @@ void analyze_and_update_system(void) // esto es asincrono a la interrupcion
         buzzer_mode = OFF;
         gpio_set(LED_PORT, YELLOW_LED_PIN);
     }
-    send_uart_data(aux, env_hum);
+    send_uart_data(vib_freq, env_hum);
     vib_freq = 0;
 }
 
